@@ -1,0 +1,21 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Dart style
+    always_declare_return_types: true
+    avoid_print: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_fields: true
+    prefer_final_locals: true
+    avoid_redundant_argument_values: true
+    sort_pub_dependencies: false
+
+    # Flutter
+    use_key_in_widget_constructors: true
+    avoid_unnecessary_containers: true
+
+analyzer:
+  errors:
+    avoid_print: warning

@@ -1,0 +1,28 @@
+# Environment variables & Secret API Keys
+.env
+.env.*
+!.env.example
+
+# Node / JS
+node_modules
+dist
+dist-ssr
+*.local
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+
+# IDE & OS
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
