@@ -5,7 +5,6 @@
 
 library;
 
-import '../../domain/entities/conversation_message.dart';
 
 class PromptBuilder {
   const PromptBuilder();

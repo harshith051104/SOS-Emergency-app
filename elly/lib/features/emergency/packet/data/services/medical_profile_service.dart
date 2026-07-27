@@ -33,7 +33,7 @@ class MedicalProfileService {
     }
 
     // Default seed medical profile
-    final defaultProfile = const MedicalSection(
+    const defaultProfile = MedicalSection(
       medicalInfo: MedicalInformation(
         bloodGroup: 'O+',
         allergies: ['Penicillin', 'Peanuts'],

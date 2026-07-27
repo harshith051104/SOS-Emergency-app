@@ -1,48 +1,96 @@
 /// emergency_generating_page.dart
 ///
-/// Displays the "Generating Emergency Packet..." sequential verification checklist.
-/// Items: Time, Location, Device Status, Medical Profile, Emergency Contacts, Completed.
-/// Reads [generatingProgress] from the controller and shows animated checkmarks.
+/// Preparing Emergency Dispatch screen (Sprint 4.1).
+/// Sequentially animates 4 dispatch compilation steps, resolves the selected service's
+/// emergency helpline number, launches the phone dialer, and transitions to live EmergencySession.
 
 library;
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/router/app_router.dart';
 import '../../../../../core/theme/app_colors.dart';
-import '../../domain/enums/emergency_status.dart';
+import '../../../../../core/utils/emergency_number_resolver.dart';
 import '../providers/emergency_providers.dart';
+import '../providers/emergency_service_provider.dart';
+import '../controllers/emergency_session_controller.dart';
 
-class EmergencyGeneratingPage extends ConsumerWidget {
+class EmergencyGeneratingPage extends ConsumerStatefulWidget {
   const EmergencyGeneratingPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EmergencyGeneratingPage> createState() => _EmergencyGeneratingPageState();
+}
+
+class _EmergencyGeneratingPageState extends ConsumerState<EmergencyGeneratingPage> {
+  int _currentStep = 1;
+  Timer? _stepTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startSequentialDispatchAnimation();
+  }
+
+  void _startSequentialDispatchAnimation() {
+    _stepTimer?.cancel();
+    _stepTimer = Timer.periodic(const Duration(milliseconds: 700), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_currentStep < 4) {
+        setState(() => _currentStep++);
+      } else {
+        timer.cancel();
+        _finalizeDispatchAndCall();
+      }
+    });
+  }
+
+  Future<void> _finalizeDispatchAndCall() async {
+    final selectionState = ref.read(emergencyServiceProvider);
+    final selectedService = selectionState.selectedService;
+    final number = selectedService?.emergencyNumber ?? '112';
+
+    // Transition state
+    ref.read(emergencySessionControllerProvider.notifier).startCommunicationStarted();
+    ref.read(emergencySessionControllerProvider.notifier).startEmergencySession();
+    ref.read(emergencyControllerProvider.notifier).startGeneratingPacket(category: selectedService?.name);
+
+
+    // Make dynamic phone call to selected helpline
+    await EmergencyNumberResolver.makeEmergencyCall(number);
+
+    if (mounted) {
+      context.go(AppRoutes.home);
+    }
+
+  }
+
+  @override
+  void dispose() {
+    _stepTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final progress = ref.watch(emergencyControllerProvider.select((s) => s.generatingProgress));
+    final selectedService = ref.watch(emergencyServiceProvider).selectedService;
 
-    // Listen for state change to navigate to live session dashboard
-    ref.listen<EmergencyStatus>(
-      emergencyStatusProvider,
-      (previous, next) {
-        if (!context.mounted) return;
-        if (next == EmergencyStatus.active) {
-          context.go(AppRoutes.emergencySession);
-        } else if (next == EmergencyStatus.idle) {
-          context.go(AppRoutes.home);
-        }
-      },
-    );
-
-    final items = [
-      _ChecklistItem(label: 'Time', targetProgress: 1),
-      _ChecklistItem(label: 'Location', targetProgress: 2),
-      _ChecklistItem(label: 'Device Status', targetProgress: 3),
-      _ChecklistItem(label: 'Medical Profile', targetProgress: 4),
-      _ChecklistItem(label: 'Emergency Contacts', targetProgress: 5),
+    final steps = [
+      const _DispatchStep(label: 'Initializing Monitoring Engine', stepIndex: 1),
+      const _DispatchStep(label: 'Compiling Telemetry Packet', stepIndex: 2),
+      const _DispatchStep(label: 'Selecting Optimal Transport', stepIndex: 3),
+      _DispatchStep(
+        label: 'Dispatching Emergency Alerts (${selectedService?.name ?? '112'})',
+        stepIndex: 4,
+      ),
     ];
 
     return PopScope(
@@ -56,7 +104,7 @@ class EmergencyGeneratingPage extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Animated Loader / Radar ──────────────────────────────
+                // Animated Loader / Radar
                 Center(
                   child: SizedBox(
                     width: 80,
@@ -65,7 +113,7 @@ class EmergencyGeneratingPage extends ConsumerWidget {
                       alignment: Alignment.center,
                       children: [
                         CircularProgressIndicator(
-                          value: progress / 6.0,
+                          value: _currentStep / 4.0,
                           strokeWidth: 6,
                           backgroundColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
                           color: AppColors.sosPrimary,
@@ -82,9 +130,9 @@ class EmergencyGeneratingPage extends ConsumerWidget {
 
                 const SizedBox(height: 36),
 
-                // ── Title ────────────────────────────────────────────────
+                // Title
                 Text(
-                  'Compiling Emergency Packet',
+                  'Preparing Emergency Dispatch',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     color: theme.colorScheme.onSurface,
@@ -94,16 +142,17 @@ class EmergencyGeneratingPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'ELLY is gathering critical telemetry data for responders...',
+                  'Connecting to ${selectedService?.name ?? 'Universal Helpline'} (${selectedService?.emergencyNumber ?? '112'})...',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: AppColors.sosPrimary,
+                    fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                const SizedBox(height: 48),
+                const SizedBox(height: 40),
 
-                // ── Checklist items ──────────────────────────────────────
+                // Checklist Items
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -114,12 +163,12 @@ class EmergencyGeneratingPage extends ConsumerWidget {
                     ),
                   ),
                   child: Column(
-                    children: items.map((item) {
-                      final isCompleted = progress >= item.targetProgress;
-                      final isCurrent = progress == item.targetProgress - 1;
+                    children: steps.map((step) {
+                      final isDone = _currentStep > step.stepIndex;
+                      final isCurrent = _currentStep == step.stepIndex;
 
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        padding: const EdgeInsets.symmetric(vertical: 10.0),
                         child: Row(
                           children: [
                             AnimatedContainer(
@@ -128,13 +177,13 @@ class EmergencyGeneratingPage extends ConsumerWidget {
                               height: 24,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: isCompleted
+                                color: isDone
                                     ? AppColors.successGreen
                                     : isCurrent
                                         ? AppColors.sosPrimary.withValues(alpha: 0.15)
                                         : Colors.transparent,
                                 border: Border.all(
-                                  color: isCompleted
+                                  color: isDone
                                       ? AppColors.successGreen
                                       : isCurrent
                                           ? AppColors.sosPrimary
@@ -142,12 +191,8 @@ class EmergencyGeneratingPage extends ConsumerWidget {
                                   width: 2,
                                 ),
                               ),
-                              child: isCompleted
-                                  ? const Icon(
-                                      Icons.check,
-                                      size: 14,
-                                      color: Colors.white,
-                                    )
+                              child: isDone
+                                  ? const Icon(Icons.check, size: 14, color: Colors.white)
                                   : isCurrent
                                       ? const Center(
                                           child: SizedBox(
@@ -162,17 +207,17 @@ class EmergencyGeneratingPage extends ConsumerWidget {
                                       : null,
                             ),
                             const SizedBox(width: 16),
-                            Text(
-                              item.label,
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: isCompleted || isCurrent
-                                    ? FontWeight.w700
-                                    : FontWeight.normal,
-                                color: isCompleted
-                                    ? theme.colorScheme.onSurface
-                                    : isCurrent
-                                        ? AppColors.sosPrimary
-                                        : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            Expanded(
+                              child: Text(
+                                step.label,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  fontWeight: isDone || isCurrent ? FontWeight.w700 : FontWeight.normal,
+                                  color: isDone
+                                      ? theme.colorScheme.onSurface
+                                      : isCurrent
+                                          ? AppColors.sosPrimary
+                                          : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                ),
                               ),
                             ),
                           ],
@@ -190,8 +235,8 @@ class EmergencyGeneratingPage extends ConsumerWidget {
   }
 }
 
-class _ChecklistItem {
-  const _ChecklistItem({required this.label, required this.targetProgress});
+class _DispatchStep {
+  const _DispatchStep({required this.label, required this.stepIndex});
   final String label;
-  final int targetProgress;
+  final int stepIndex;
 }

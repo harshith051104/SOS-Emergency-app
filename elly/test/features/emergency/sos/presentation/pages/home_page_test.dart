@@ -7,7 +7,6 @@ library;
 
 import 'package:elly/features/emergency/responders/domain/usecases/get_responders_usecase.dart';
 import 'package:elly/features/emergency/responders/presentation/providers/responder_providers.dart';
-import 'package:elly/features/emergency/sos/domain/entities/emergency_config.dart';
 import 'package:elly/features/emergency/sos/domain/enums/emergency_status.dart';
 import 'package:elly/features/emergency/sos/domain/services/emergency_risk_evaluator.dart';
 import 'package:elly/features/emergency/sos/domain/usecases/cancel_emergency_usecase.dart';
@@ -15,9 +14,9 @@ import 'package:elly/features/emergency/sos/domain/usecases/create_emergency_use
 import 'package:elly/features/emergency/sos/presentation/pages/home_page.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/sos_button.dart';
 import 'package:elly/features/emergency/sos/presentation/providers/emergency_providers.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:mocktail/mocktail.dart';
 
 import '../../../../../helpers/test_helpers.dart';

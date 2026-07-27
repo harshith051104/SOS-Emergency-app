@@ -161,7 +161,7 @@ class _PulseRing extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.sosPrimary.withOpacity(opacity.clamp(0.0, 1.0)),
+        color: AppColors.sosPrimary.withValues(alpha: opacity.clamp(0.0, 1.0)),
       ),
     );
   }
@@ -187,8 +187,8 @@ class _CoreButton extends StatelessWidget {
         gradient: RadialGradient(
           colors: isLocked
               ? [
-                  AppColors.sosPrimaryLight.withOpacity(0.7),
-                  AppColors.sosPrimary.withOpacity(0.7),
+                  AppColors.sosPrimaryLight.withValues(alpha: 0.7),
+                  AppColors.sosPrimary.withValues(alpha: 0.7),
                 ]
               : [
                   AppColors.sosPrimaryLight,
@@ -200,17 +200,18 @@ class _CoreButton extends StatelessWidget {
             ? null
             : [
                 BoxShadow(
-                  color: AppColors.sosPrimary.withOpacity(0.45),
+                  color: AppColors.sosPrimary.withValues(alpha: 0.45),
                   blurRadius: 32,
                   spreadRadius: 4,
                 ),
                 BoxShadow(
-                  color: AppColors.sosPrimary.withOpacity(0.20),
+                  color: AppColors.sosPrimary.withValues(alpha: 0.20),
                   blurRadius: 60,
                   spreadRadius: 8,
                 ),
               ],
       ),
+
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

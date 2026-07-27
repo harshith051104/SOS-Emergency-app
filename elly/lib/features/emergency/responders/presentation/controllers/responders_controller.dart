@@ -6,6 +6,7 @@
 library;
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:elly/core/utils/app_logger.dart';
@@ -58,8 +59,11 @@ class RespondersController extends StateNotifier<RespondersState> {
         _deleteResponderUseCase = deleteResponderUseCase,
         _reorderRespondersUseCase = reorderRespondersUseCase,
         super(const RespondersState()) {
-    // Load responders immediately on construction.
-    loadResponders();
+    // Defer to post-frame so provider initialization never mutates state
+    // during Flutter's build/layout/paint/semantics pipeline.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) loadResponders();
+    });
   }
 
   final GetRespondersUseCase _getRespondersUseCase;
@@ -71,18 +75,28 @@ class RespondersController extends StateNotifier<RespondersState> {
 
   /// Loads all responders from the repository.
   Future<void> loadResponders() async {
-    state = state.copyWith(isLoading: true);
+    // isLoading=true is safe here when called from addPostFrameCallback (constructor).
+    // When called directly (e.g. after save/delete), the caller is already in a safe
+    // context (gesture callback or post-frame), so direct mutation is fine.
+    if (mounted) state = state.copyWith(isLoading: true);
     try {
       final responders = await _getRespondersUseCase();
-      if (mounted) state = state.copyWith(responders: responders, isLoading: false);
+      // Async continuation can land between _handleBeginFrame and _handleDrawFrame
+      // on Android. Wrapping in addPostFrameCallback guarantees the mutation is
+      // deferred until after the complete frame pipeline.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) state = state.copyWith(responders: responders, isLoading: false);
+      });
     } on Exception catch (e, st) {
       appLogger.error('RespondersController: loadResponders failed', e, st);
-      if (mounted) {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'Failed to load responders.',
-        );
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          state = state.copyWith(
+            isLoading: false,
+            error: 'Failed to load responders.',
+          );
+        }
+      });
     }
   }
 
@@ -93,7 +107,9 @@ class RespondersController extends StateNotifier<RespondersState> {
       await loadResponders();
     } on Exception catch (e, st) {
       appLogger.error('RespondersController: saveResponder failed', e, st);
-      if (mounted) state = state.copyWith(error: 'Failed to save responder.');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) state = state.copyWith(error: 'Failed to save responder.');
+      });
     }
   }
 
@@ -104,7 +120,9 @@ class RespondersController extends StateNotifier<RespondersState> {
       await loadResponders();
     } on Exception catch (e, st) {
       appLogger.error('RespondersController: deleteResponder failed', e, st);
-      if (mounted) state = state.copyWith(error: 'Failed to delete responder.');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) state = state.copyWith(error: 'Failed to delete responder.');
+      });
     }
   }
 
@@ -119,7 +137,8 @@ class RespondersController extends StateNotifier<RespondersState> {
     final moved = list.removeAt(oldIndex);
     list.insert(adjusted, moved);
 
-    // Optimistic update for instant UI feedback.
+    // Optimistic update for instant UI feedback — safe since this is called
+    // from a gesture callback (already outside the frame pipeline).
     if (mounted) state = state.copyWith(responders: list);
 
     try {

@@ -232,12 +232,14 @@ abstract final class EmergencyNumberResolver {
         await launchUrl(phoneUri, mode: LaunchMode.externalApplication);
         return true;
       } else {
-        appLogger.error('EmergencyNumberResolver: Cannot launch phone call URI: $phoneUri');
-        return false;
+        appLogger.warning('EmergencyNumberResolver: canLaunchUrl returned false, attempting direct launch: $phoneUri');
+        await launchUrl(phoneUri, mode: LaunchMode.externalNonBrowserApplication);
+        return true;
       }
     } catch (e, st) {
-      appLogger.error('EmergencyNumberResolver: Error placing emergency call', e, st);
+      appLogger.error('EmergencyNumberResolver: Error placing emergency call to $cleanNumber', e, st);
       return false;
     }
   }
+
 }

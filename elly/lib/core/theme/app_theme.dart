@@ -18,7 +18,6 @@ abstract final class AppTheme {
   static ThemeData get lightTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: AppColors.colorSchemeSeed,
-      brightness: Brightness.light,
       surface: AppColors.surfaceLight,
     );
 
@@ -96,7 +95,8 @@ abstract final class AppTheme {
         titleMedium: _fontStyle(
           fontSize: 13,
           fontWeight: FontWeight.w500,
-          color: AppColors.sosOnPrimary.withOpacity(0.85),
+          color: AppColors.sosOnPrimary.withValues(alpha: 0.85),
+
           letterSpacing: 1.5,
         ),
         // Sheet title

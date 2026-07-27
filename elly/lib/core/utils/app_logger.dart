@@ -18,8 +18,6 @@ import 'package:talker_flutter/talker_flutter.dart';
 /// ```
 final Talker appLogger = TalkerFlutter.init(
   settings: TalkerSettings(
-    // Enable all log levels in debug; configure via build flavours later.
-    enabled: true,
-    useConsoleLogs: true,
+    
   ),
 );

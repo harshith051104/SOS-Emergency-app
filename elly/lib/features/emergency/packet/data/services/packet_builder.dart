@@ -22,6 +22,9 @@ class EmergencyPacketBuilder {
   final List<PacketContributor> _contributors;
   final Uuid _uuid;
 
+  Uuid get uuid => _uuid;
+
+
   /// Executes all contributors sequentially to compile the full EmergencyPacket.
   Future<EmergencyPacket> build({
     required String id,
@@ -109,15 +112,15 @@ class EmergencyPacketBuilder {
     return '$id|$sessionId|$type|${location.latitude},${location.longitude}|${device.batteryPercent}|${medical.medicalInfo.bloodGroup}|${responders.responders.length}|${timeline.events.length}';
   }
 
-  /// Implements FNV-1a 64-bit non-cryptographic high-performance hash in pure Dart.
+  /// Implements 32-bit FNV-1a high-performance checksum hash compatible with Web, Mobile, and Desktop.
   String _calculateFnv1aChecksum(String input) {
-    var hash = 0xcbf29ce484222325;
+    var hash = 0x811c9dc5;
     final bytes = utf8.encode(input);
     for (final byte in bytes) {
       hash ^= byte;
-      hash = (hash * 0x100000001b3) & 0xffffffffffffffff;
+      hash = (hash * 0x01000193) & 0xffffffff;
     }
-    return hash.toRadixString(16).padLeft(16, '0').toUpperCase();
+    return hash.toRadixString(16).padLeft(8, '0').toUpperCase();
   }
 }
 
@@ -140,7 +143,7 @@ class LocationSectionFallback {
 
 class DeviceSectionFallback {
   static DeviceSection create() {
-    return DeviceSection(
+    return const DeviceSection(
       batteryPercent: 0,
       isCharging: false,
       connectionType: 'none',

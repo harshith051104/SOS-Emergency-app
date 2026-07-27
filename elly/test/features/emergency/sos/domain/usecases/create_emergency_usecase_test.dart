@@ -31,8 +31,8 @@ void main() {
     id: 'test-id',
     type: EmergencyType.manual,
     status: EmergencyStatus.active,
-    createdAt: DateTime(2024, 1, 1),
-    activatedAt: DateTime(2024, 1, 1),
+    createdAt: DateTime(2024),
+    activatedAt: DateTime(2024),
   );
 
   group('CreateEmergencyUseCase —', () {

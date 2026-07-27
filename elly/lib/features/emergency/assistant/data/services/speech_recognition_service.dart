@@ -45,7 +45,8 @@ class GroqSpeechRecognitionService implements SpeechRecognitionService {
         ..fields['response_format'] = 'json'
         ..files.add(await http.MultipartFile.fromPath('file', filePath));
 
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 12));
+      final streamedResponse = await _client.send(request).timeout(const Duration(seconds: 12));
+
       final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {

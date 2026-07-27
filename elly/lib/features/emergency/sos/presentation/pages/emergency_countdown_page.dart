@@ -1,12 +1,7 @@
 /// emergency_countdown_page.dart
 ///
-/// Full-screen countdown page displayed after the user confirms activation.
-/// Features:
-///   - Large animated countdown number
-///   - Cancel button to abort
-///   - PopScope prevents accidental back-navigation
-///   - Listens for state transitions to navigate to activated screen
-///   - Reusable: works for any [EmergencyType] trigger
+/// Dedicated SOS Countdown Screen focused exclusively on the 10-second timer
+/// and cancellation protection. Navigates on completion event.
 
 library;
 
@@ -17,112 +12,140 @@ import 'package:go_router/go_router.dart';
 import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/router/app_router.dart';
-import '../../domain/enums/emergency_status.dart';
+import '../../domain/entities/sos_countdown_state.dart';
 import '../providers/emergency_providers.dart';
+import '../providers/sos_countdown_provider.dart';
+import '../controllers/emergency_session_controller.dart';
 import '../widgets/emergency_countdown_widget.dart';
 
-/// Full-screen countdown before emergency activation.
-class EmergencyCountdownPage extends ConsumerWidget {
+
+class EmergencyCountdownPage extends ConsumerStatefulWidget {
   const EmergencyCountdownPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final countdownValue = ref.watch(countdownValueProvider);
-    final status = ref.watch(emergencyStatusProvider);
+  ConsumerState<EmergencyCountdownPage> createState() => _EmergencyCountdownPageState();
+}
 
-    // Listen for state change to navigate to active session or complete screen.
-    ref.listen<EmergencyStatus>(emergencyStatusProvider, (previous, next) {
-      if (!context.mounted) return;
+class _EmergencyCountdownPageState extends ConsumerState<EmergencyCountdownPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Auto-start 10s countdown if engine is idle
+    Future.microtask(() {
+      if (!mounted) return;
+      final engineState = ref.read(sosCountdownStateProvider);
+      if (engineState.status == SosCountdownStatus.idle) {
+        ref.read(sosCountdownStateProvider.notifier).startCountdown();
+      }
+    });
+  }
 
-      switch (next) {
-        case EmergencyStatus.generatingPacket:
-          context.go(AppRoutes.emergencyGenerating);
-        case EmergencyStatus.active:
-          context.go(AppRoutes.emergencySession);
-        case EmergencyStatus.sessionCompleted:
-          context.go(AppRoutes.emergencyComplete);
-        case EmergencyStatus.idle:
-        case EmergencyStatus.cancelled:
-          context.go('/');
-        case EmergencyStatus.failed:
-          context.go('/');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Emergency activation failed. Please try again.'),
-              backgroundColor: AppColors.sosPrimary,
-            ),
-          );
-        default:
-          break;
+  @override
+  Widget build(BuildContext context) {
+    final countdownModel = ref.watch(sosCountdownStateProvider);
+
+    ref.listen<SosCountdownStateModel>(sosCountdownStateProvider, (previous, next) {
+      if (!mounted) return;
+      if (next.status == SosCountdownStatus.cancelled) {
+        context.go(AppRoutes.home);
+      } else if (next.status == SosCountdownStatus.completed) {
+        ref.read(emergencySessionControllerProvider.notifier).onCountdownCompleted();
+        context.go(AppRoutes.emergencyServiceSelection);
       }
     });
 
+
     return PopScope(
-      // Prevent hardware back from exiting the countdown without cancelling.
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          _handleCancel(context, ref);
+          _handleCancel(context);
         }
       },
       child: Scaffold(
         body: SafeArea(
           child: Stack(
             children: [
-              // ── Animated background ──────────────────────────────────
-              _CountdownBackground(progress: countdownValue),
-
-              // ── Main content ─────────────────────────────────────────
+              _CountdownBackground(progress: countdownModel.secondsRemaining),
               Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // ── Countdown number ────────────────────────────────
-                    EmergencyCountdownWidget(key: ValueKey(countdownValue), value: countdownValue),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Trigger Source Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.sosPrimary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppColors.sosPrimary.withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.flash_on_rounded, size: 16, color: AppColors.sosPrimary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'TRIGGER: ${countdownModel.triggerSource}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.sosPrimary,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
-                    const SizedBox(height: 32),
+                      const SizedBox(height: 32),
 
-                    // ── Title ───────────────────────────────────────────
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Text(
-                        AppStrings.countdownTitle,
-                        style: Theme.of(context).textTheme.headlineSmall,
+                      // Large Countdown Number
+                      EmergencyCountdownWidget(
+                        key: ValueKey(countdownModel.secondsRemaining),
+                        value: countdownModel.secondsRemaining,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Warning Title & Explanation
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text(
+                          AppStrings.countdownTitle,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.8,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Emergency services & SOS Circle contacts will be notified automatically when countdown finishes.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
                         textAlign: TextAlign.center,
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 48),
 
-                    // ── Status indicator ────────────────────────────────
-                    if (status == EmergencyStatus.activating)
-                      const _ActivatingIndicator(),
-                  ],
-                ),
-              ),
-
-              // ── Cancel button ─────────────────────────────────────────
-              Positioned(
-                bottom: 48,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: OutlinedButton(
-                    onPressed: status == EmergencyStatus.activating
-                        ? null
-                        : () => _handleCancel(context, ref),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(160, 52),
-                      foregroundColor: AppColors.sosPrimary,
-                      side: const BorderSide(
-                        color: AppColors.sosPrimary,
-                        width: 1.5,
+                      // Cancel Button
+                      ElevatedButton.icon(
+                        onPressed: () => _handleCancel(context),
+                        icon: const Icon(Icons.shield_rounded, size: 22),
+                        label: const Text('I\'M SAFE — CANCEL EMERGENCY'),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(280, 56),
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: AppColors.sosPrimary,
+                          elevation: 0,
+                          side: const BorderSide(color: AppColors.sosPrimary, width: 2),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.8),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: const Text('I\'M SAFE — CANCEL'),
+                    ],
                   ),
                 ),
               ),
@@ -133,69 +156,30 @@ class EmergencyCountdownPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _handleCancel(BuildContext context, WidgetRef ref) async {
-    await ref.read(emergencyControllerProvider.notifier).cancelCountdown();
+  void _handleCancel(BuildContext context) {
+    ref.read(sosCountdownStateProvider.notifier).cancelCountdown();
+    ref.read(emergencyControllerProvider.notifier).cancelCountdown();
+    context.go(AppRoutes.home);
   }
 }
 
-// ── Private Widgets ───────────────────────────────────────────────────────────
-
-/// Subtle animated background that pulses red during countdown.
 class _CountdownBackground extends StatelessWidget {
   const _CountdownBackground({required this.progress});
-
   final int progress;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return AnimatedContainer(
       duration: const Duration(milliseconds: 600),
       decoration: BoxDecoration(
         gradient: RadialGradient(
-          center: Alignment.center,
           radius: 0.9,
           colors: isDark
-              ? [
-                  AppColors.sosPrimary.withOpacity(0.10),
-                  AppColors.surfaceDark,
-                ]
-              : [
-                  AppColors.sosPrimary.withOpacity(0.07),
-                  AppColors.surfaceLight,
-                ],
+              ? [AppColors.sosPrimary.withValues(alpha: 0.14), AppColors.surfaceDark]
+              : [AppColors.sosPrimary.withValues(alpha: 0.09), AppColors.surfaceLight],
         ),
       ),
-    );
-  }
-}
-
-/// Shown while the activation call is in progress (status = activating).
-class _ActivatingIndicator extends StatelessWidget {
-  const _ActivatingIndicator();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.5,
-            color: AppColors.sosPrimary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Activating…',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.sosPrimary,
-                fontWeight: FontWeight.w600,
-              ),
-        ),
-      ],
     );
   }
 }

@@ -66,7 +66,7 @@ class LocationService {
 
       // 3. Fetch GPS coordinates (with timeout to prevent freezing)
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best,
+        
       ).timeout(const Duration(seconds: 4));
 
       latitude = position.latitude;
@@ -97,7 +97,7 @@ class LocationService {
         }
       } catch (e) {
         // Reverse geocoding failed (e.g. no internet/service unavailable), use coordinates string as fallback
-        address = 'Lat: ${latitude?.toStringAsFixed(5)}, Lng: ${longitude?.toStringAsFixed(5)}';
+        address = 'Lat: ${latitude.toStringAsFixed(5)}, Lng: ${longitude.toStringAsFixed(5)}';
         debugPrint('LocationService: Geocoding failed: $e');
       }
 

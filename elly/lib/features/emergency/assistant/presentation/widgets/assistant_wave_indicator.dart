@@ -86,12 +86,15 @@ class _AssistantWaveIndicatorState extends State<AssistantWaveIndicator>
     // markNeedsCompositingBitsUpdate() to cascade through the parent render tree
     // on every animation tick → triggered layout invalidation before flushSemantics()
     // → "!semantics.parentDataDirty" assertion every frame.
-    return ExcludeSemantics(
+    return RepaintBoundary(
       child: CustomPaint(
         size: const Size(80, 80),
         painter: _painter,
+        isComplex: true,
+        willChange: true,
       ),
     );
+
   }
 }
 

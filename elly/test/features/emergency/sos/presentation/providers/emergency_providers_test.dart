@@ -8,8 +8,8 @@ library;
 import 'package:elly/features/emergency/responders/domain/usecases/get_responders_usecase.dart';
 import 'package:elly/features/emergency/sos/domain/entities/emergency_config.dart';
 import 'package:elly/features/emergency/sos/domain/entities/emergency_event.dart';
-import 'package:elly/features/emergency/sos/domain/entities/emergency_session.dart';
 import 'package:elly/features/emergency/sos/domain/enums/emergency_status.dart';
+
 import 'package:elly/features/emergency/sos/domain/enums/emergency_type.dart';
 import 'package:elly/features/emergency/sos/domain/services/emergency_risk_evaluator.dart';
 import 'package:elly/features/emergency/sos/domain/usecases/cancel_emergency_usecase.dart';
@@ -75,8 +75,8 @@ EmergencyEvent _mockEvent() => EmergencyEvent(
       id: 'test-uuid-1234',
       type: EmergencyType.manual,
       status: EmergencyStatus.active,
-      createdAt: DateTime(2024, 1, 1),
-      activatedAt: DateTime(2024, 1, 1),
+      createdAt: DateTime(2024),
+      activatedAt: DateTime(2024),
     );
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

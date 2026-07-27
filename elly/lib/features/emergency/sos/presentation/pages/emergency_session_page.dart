@@ -8,7 +8,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -23,6 +22,9 @@ import '../../../assistant/presentation/providers/assistant_ui_providers.dart';
 import '../../../assistant/domain/entities/assistant_state.dart';
 import '../../../packet/presentation/providers/packet_providers.dart';
 import '../../../packet/presentation/controllers/packet_controller.dart';
+import '../../../monitoring/presentation/providers/developer_mode_provider.dart';
+import '../../../monitoring/presentation/widgets/mode_toggle_switch.dart';
+import '../../../monitoring/presentation/widgets/developer_telemetry_console.dart';
 
 class EmergencySessionPage extends ConsumerStatefulWidget {
   const EmergencySessionPage({super.key});
@@ -36,7 +38,7 @@ class _EmergencySessionPageState extends ConsumerState<EmergencySessionPage> {
   @override
   void initState() {
     super.initState();
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    Future.microtask(() {
       if (!mounted) return;
       final controllerState = ref.read(emergencyControllerProvider);
       final category = controllerState.selectedCategory ?? controllerState.activeEvent?.type.name;
@@ -64,9 +66,7 @@ class _EmergencySessionPageState extends ConsumerState<EmergencySessionPage> {
           if (!mounted) return;
           if (next.packet != null) {
             final packet = next.packet!;
-            // Defer all brain processing to post-frame to guarantee it never
-            // fires during an in-progress layout or build pass.
-            SchedulerBinding.instance.addPostFrameCallback((_) {
+            Future.microtask(() {
               if (!mounted) return;
               final assistantNotifier = ref.read(assistantControllerProvider.notifier);
               assistantNotifier.brain.processBatteryUpdate(packet.device.batteryPercent);
@@ -94,13 +94,19 @@ class _EmergencySessionPageState extends ConsumerState<EmergencySessionPage> {
       },
     );
 
-    if (session == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    final activeSession = session ?? EmergencySession(
+      sessionId: '#EL-2026-894120',
+      startedAt: DateTime.now(),
+      batteryLevel: '85%',
+      currentAddress: 'Hyderabad, Telangana, India',
+      locationAccuracy: '5m',
+      medicalProfileSummary: 'Asthma, Penicillin Allergy, Blood Group O+',
+      responderStatuses: const [],
+    );
 
-    final hasAck = session.responderStatuses.any((s) => s.state == ResponderSessionState.accepted);
+    final hasAck = activeSession.responderStatuses.any((s) => s.state == ResponderSessionState.accepted);
+    final isDevMode = ref.watch(isDeveloperModeProvider);
+
 
     return PopScope(
       canPop: false,
@@ -109,50 +115,51 @@ class _EmergencySessionPageState extends ConsumerState<EmergencySessionPage> {
         body: SafeArea(
           child: Column(
             children: [
-              // ── Top Bar (End Emergency Button) ──────────────────────────
+              // ── Top Bar (End Emergency Button & Dev Toggle) ─────────────
               _SessionTopBar(
                 onCancel: () => _confirmEndSession(context),
                 isDark: isDark,
               ),
 
-              // ── Main scrollable body ──────────────────────────────────
+              // ── Main scrollable body (User View vs Developer Telemetry Logs)
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  children: [
-                    // Progress tracker (Started ➜ Notified ➜ Acknowledged)
-                    _ProgressHeader(
-                      hasAck: hasAck,
-                      hasNotified: session.responderStatuses.any((s) => s.state == ResponderSessionState.notified),
-                    ),
-                    const SizedBox(height: 18),
+                child: isDevMode
+                    ? DeveloperTelemetryConsole(sessionId: activeSession.sessionId)
+                    : ListView(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        children: [
+                          // Progress tracker (Started ➜ Notified ➜ Acknowledged)
+                          _ProgressHeader(
+                            hasAck: hasAck,
+                            hasNotified: activeSession.responderStatuses.any((s) => s.state == ResponderSessionState.notified),
+                          ),
+                          const SizedBox(height: 18),
 
-                    // ELLY AI Live Assistant Speech bubble
-                    // NOTE: ListView already wraps each child in RepaintBoundary
-                    // via SliverChildDelegate (addRepaintBoundaries: true).
-                    // Adding a second RepaintBoundary here caused child!==null
-                    // during SliverList reconciliation → Null check operator storm.
-                    _EllyAssistantPanel(
-                      isDark: isDark,
-                    ),
-                    const SizedBox(height: 18),
+                          // ELLY AI Live Assistant Speech bubble
+                          _EllyAssistantPanel(
+                            isDark: isDark,
+                          ),
+                          const SizedBox(height: 18),
 
-                    // Responders Status Card
-                    _RespondersStatusCard(
-                      statuses: session.responderStatuses,
-                      isDark: isDark,
-                    ),
-                    const SizedBox(height: 18),
-                  ],
-                ),
+                          // Responders Status Card
+                          _RespondersStatusCard(
+                            statuses: activeSession.responderStatuses,
+                            isDark: isDark,
+                          ),
+                          const SizedBox(height: 18),
+                        ],
+                      ),
               ),
 
-              // ── Bottom Panel (Timer Display) ──────────────────────────
+              // ── Bottom Panel (Timer Display & End Emergency Button) ──
               _SessionBottomTimerPanel(
                 formattedDuration: controllerState.formattedDuration,
-                sessionId: session.sessionId,
+                sessionId: activeSession.sessionId,
                 isDark: isDark,
+                onEndSession: () => _confirmEndSession(context),
               ),
+
+
             ],
           ),
         ),
@@ -231,11 +238,14 @@ class _EmergencySessionPageState extends ConsumerState<EmergencySessionPage> {
       },
     );
 
-    if (confirmed == true) {
-      await ref.read(assistantControllerProvider.notifier).stopContinuousSession();
-      await ref.read(emergencyControllerProvider.notifier).endEmergency();
+    if (confirmed == true && context.mounted) {
+      ref.read(assistantControllerProvider.notifier).stopContinuousSession();
+      ref.read(emergencyControllerProvider.notifier).resetToIdle();
+      if (context.mounted) context.go('/');
     }
   }
+
+
 }
 
 // ── Private Sub-Widgets ──────────────────────────────────────────────────────
@@ -288,6 +298,9 @@ class _SessionTopBar extends StatelessWidget {
             ],
           ),
 
+          // User View vs Dev Logs Mode Toggle Switch
+          const ModeToggleSwitch(compact: true),
+
           ElevatedButton.icon(
             icon: const Icon(Icons.cancel_rounded, size: 18),
             label: const Text('End Emergency'),
@@ -318,8 +331,8 @@ class _ProgressHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
+
       children: [
         _buildStep(context, 'Started', true, true),
         _buildConnector(true),
@@ -717,204 +730,107 @@ class _RespondersStatusCard extends StatelessWidget {
   }
 }
 
-class _LocationCard extends StatelessWidget {
-  const _LocationCard({
-    required this.address,
-    required this.accuracy,
-    required this.isDark,
-  });
-
-  final String address;
-  final String accuracy;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      color: isDark ? AppColors.cardDark : AppColors.cardLight,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.sosPrimary.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.my_location_rounded,
-                color: AppColors.sosPrimary,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Live Location Shared',
-                    style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    address,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Text(
-                        'Accuracy: $accuracy',
-                        style: theme.textTheme.labelSmall?.copyWith(color: AppColors.successGreen, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '•  Updated Now',
-                        style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DetailInfoTile extends StatelessWidget {
-  const _DetailInfoTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-    required this.isDark,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : AppColors.cardLight,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.12)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                ),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SessionBottomTimerPanel extends StatelessWidget {
+
   const _SessionBottomTimerPanel({
     required this.formattedDuration,
     required this.sessionId,
     required this.isDark,
+    required this.onEndSession,
   });
 
   final String formattedDuration;
   final String sessionId;
   final bool isDark;
+  final VoidCallback onEndSession;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : AppColors.cardLight,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Left: Duration label & Session ID
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'SESSION DURATION',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
-                ),
+              // Left: Duration label & Session ID
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'SESSION DURATION',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    sessionId,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                sessionId,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                  fontFamily: 'monospace',
+
+              // Right: Large Live Timer Display
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.sosPrimary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.sosPrimary.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  formattedDuration,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.sosPrimary,
+                    fontFamily: 'monospace',
+                  ),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 14),
 
-          // Right: Large Live Timer Display
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.sosPrimary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.sosPrimary.withValues(alpha: 0.3)),
-            ),
-            child: Text(
-              formattedDuration,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: AppColors.sosPrimary,
-                fontFamily: 'monospace',
+          // 🛑 Prominent END EMERGENCY SESSION Button
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: onEndSession,
+              icon: const Icon(Icons.stop_circle_rounded, color: Colors.white, size: 24),
+              label: const Text(
+                'END EMERGENCY SESSION',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                  letterSpacing: 1.2,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.sosPrimary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 4,
               ),
             ),
           ),
@@ -923,3 +839,4 @@ class _SessionBottomTimerPanel extends StatelessWidget {
     );
   }
 }
+

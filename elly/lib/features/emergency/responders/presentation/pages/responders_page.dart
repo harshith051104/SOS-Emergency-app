@@ -105,7 +105,8 @@ class RespondersPage extends ConsumerWidget {
                           _confirmDelete(context, ref, responder.id, responder.name),
                     );
                   },
-                  onReorder: (oldIndex, newIndex) {
+                  onReorderItem: (oldIndex, newIndex) {
+
                     ref
                         .read(respondersControllerProvider.notifier)
                         .reorder(oldIndex, newIndex);

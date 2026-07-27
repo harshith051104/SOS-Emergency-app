@@ -98,7 +98,8 @@ class _EmergencyConfirmationPageState
         case EmergencyStatus.active:
         case EmergencyStatus.activating:
         case EmergencyStatus.generatingPacket:
-          context.go(AppRoutes.emergencySession);
+          context.go(AppRoutes.home);
+
         case EmergencyStatus.sessionCompleted:
           context.go(AppRoutes.emergencyComplete);
         case EmergencyStatus.idle:
@@ -140,7 +141,6 @@ class _EmergencyConfirmationPageState
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const SizedBox(height: 4),
                       // Title
@@ -159,10 +159,11 @@ class _EmergencyConfirmationPageState
                       Text(
                         'Choose the situation that matches your emergency.',
                         style: theme.textTheme.titleSmall?.copyWith(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontWeight: FontWeight.w400,
                           fontSize: 14,
                         ),
+
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
@@ -275,7 +276,7 @@ class _EmergencyConfirmationPageState
               ),
             ),
             style: TextButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.1),
+              backgroundColor: Colors.white.withValues(alpha: 0.1),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             ),
@@ -285,9 +286,9 @@ class _EmergencyConfirmationPageState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.sosPrimary.withOpacity(0.2),
+              color: AppColors.sosPrimary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.sosPrimary.withOpacity(0.4)),
+              border: Border.all(color: AppColors.sosPrimary.withValues(alpha: 0.4)),
             ),
             child: Row(
               children: [
@@ -329,10 +330,10 @@ class _EmergencyConfirmationPageState
       decoration: BoxDecoration(
         color: const Color(0xFF141D2D),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -349,7 +350,7 @@ class _EmergencyConfirmationPageState
               color: AppColors.sosPrimary,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.sosPrimary.withOpacity(0.5),
+                  color: AppColors.sosPrimary.withValues(alpha: 0.5),
                   blurRadius: 8,
                   spreadRadius: 1,
                 ),
@@ -370,11 +371,11 @@ class _EmergencyConfirmationPageState
           const SizedBox(width: 12),
 
           // Center Text
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Text(
                   'SOS will be activated automatically',
                   style: TextStyle(
@@ -402,7 +403,7 @@ class _EmergencyConfirmationPageState
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.redAccent.withOpacity(0.15),
+              color: Colors.redAccent.withValues(alpha: 0.15),
             ),
             child: const Icon(
               Icons.notifications_active_rounded,
@@ -452,7 +453,7 @@ class _CategoryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: category.gradientColors.first.withOpacity(0.3),
+              color: category.gradientColors.first.withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -469,7 +470,7 @@ class _CategoryCard extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.22),
+                color: Colors.white.withValues(alpha: 0.22),
               ),
               child: Icon(
                 category.icon,
@@ -498,7 +499,7 @@ class _CategoryCard extends StatelessWidget {
                 Text(
                   category.description,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 10.5,
                     fontWeight: FontWeight.w400,
                     height: 1.2,
@@ -508,6 +509,7 @@ class _CategoryCard extends StatelessWidget {
                 ),
               ],
             ),
+
           ],
         ),
       ),
@@ -521,15 +523,15 @@ class _SafeSuccessPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: AppColors.successGreen,
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
+            padding: EdgeInsets.symmetric(horizontal: 40),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Icon(Icons.check_circle_rounded, color: Colors.white, size: 80),
                 SizedBox(height: 24),
                 Text(

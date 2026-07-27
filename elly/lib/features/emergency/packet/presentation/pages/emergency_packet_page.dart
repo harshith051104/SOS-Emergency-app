@@ -12,7 +12,6 @@ import 'package:intl/intl.dart';
 import 'package:elly/core/theme/app_colors.dart';
 import '../../domain/entities/emergency_packet.dart';
 import '../../domain/entities/responder_section.dart';
-import '../../domain/entities/timeline_section.dart';
 import '../controllers/packet_controller.dart';
 import '../providers/packet_providers.dart';
 
@@ -268,9 +267,8 @@ class _PacketDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return ListView(
+
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
       children: [
         // 1. Packet Summary Section

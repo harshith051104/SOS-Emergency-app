@@ -91,8 +91,6 @@ class AssistantController extends StateNotifier<AssistantControllerState> {
       policyEngine: _policyEngine,
       scheduler: _scheduler,
     );
-
-    state = state.copyWith(state: AssistantState.idle);
   }
 
   final ConversationManager _conversationManager;
@@ -108,8 +106,8 @@ class AssistantController extends StateNotifier<AssistantControllerState> {
   late final VoiceScheduler _scheduler;
   late final AssistantBrain _brain;
 
-  String? _recordingPath;
   DateTime? _inputStartTime;
+
   Timer? _listeningTimer;
   bool _isAutoSessionActive = false;
   String? _activeEmergencyCategory;
@@ -127,9 +125,9 @@ class AssistantController extends StateNotifier<AssistantControllerState> {
     _isAutoSessionActive = true;
     _activeEmergencyCategory = category;
 
-    appLogger.info('AssistantController: Starting continuous emergency session [Category: $category]');
+    appLogger.info('AssistantController: Continuous session initialized [Category: $category]');
 
-    // If conversation is empty, speak initial warm category greeting
+    /* ── Voice Assistant Background Audio Loop (Commented out per user requirement) ──
     if (_conversationManager.messages.isEmpty) {
       String initialGreeting = "I am Elly, your emergency supporter. I am right here with you, and help is on the way. Tell me what is happening.";
       final catUpper = (category ?? '').toUpperCase();
@@ -145,7 +143,9 @@ class AssistantController extends StateNotifier<AssistantControllerState> {
     } else {
       await startListening();
     }
+    ── End Voice Assistant Comment ── */
   }
+
 
   /// Stops continuous emergency session when SOS concludes.
   Future<void> stopContinuousSession() async {
@@ -176,7 +176,8 @@ class AssistantController extends StateNotifier<AssistantControllerState> {
 
     if (!mounted) return;
     state = state.copyWith(state: AssistantState.listening);
-    _recordingPath = await _audioSession.startRecording();
+    await _audioSession.startRecording();
+
 
     // Extended 12-second listening window to allow user to complete their request naturally
     _listeningTimer = Timer(const Duration(seconds: 12), () {
@@ -380,10 +381,10 @@ class AssistantController extends StateNotifier<AssistantControllerState> {
     bool isSafeMode = false,
     bool isOfflineFallback = false,
   }) async {
-    if (!mounted) return;
     final ttsStart = DateTime.now();
-    final audioPath = await _speechSynthesis.synthesize(responseText);
+    await _speechSynthesis.synthesize(responseText);
     final ttsEnd = DateTime.now();
+
 
     if (mounted) {
       state = state.copyWith(
@@ -428,7 +429,6 @@ class AssistantController extends StateNotifier<AssistantControllerState> {
     // (i.e., events queued directly by AssistantBrain without pre-synthesis).
     final preSynthesizedPath = _scheduler.currentEventAudioPath;
     String? audioPath;
-    final synthesisStart = DateTime.now();
 
     if (preSynthesizedPath != null) {
       audioPath = preSynthesizedPath;
@@ -437,8 +437,8 @@ class AssistantController extends StateNotifier<AssistantControllerState> {
       audioPath = await _speechSynthesis.synthesize(text);
     }
 
-    final synthesisEnd = DateTime.now();
     if (!mounted) return;
+
 
     final completer = Completer<void>();
     final playStart = DateTime.now();

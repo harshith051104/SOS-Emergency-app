@@ -37,12 +37,10 @@ class AudioSessionManager {
           isSpeakerphoneOn: true,
           stayAwake: true,
           contentType: AndroidContentType.speech,
-          usageType: AndroidUsageType.media,
           audioFocus: AndroidAudioFocus.gainTransientExclusive,
         ),
         iOS: AudioContextIOS(
-          category: AVAudioSessionCategory.playback,
-          options: {
+          options: const {
             AVAudioSessionOptions.defaultToSpeaker,
           },
         ),
@@ -157,22 +155,22 @@ class AudioSessionManager {
       if (await file.exists()) {
         final bytes = await file.readAsBytes();
         final mimeType = filePath.endsWith('.mp3') ? 'audio/mpeg' : 'audio/wav';
-        await _player.play(BytesSource(bytes, mimeType: mimeType));
+        await _player.play(BytesSource(bytes, mimeType: mimeType)).catchError((e) {
+          appLogger.warning('AudioSessionManager: BytesSource play error caught cleanly: $e');
+        });
       } else {
-        await _player.play(DeviceFileSource(filePath));
+        await _player.play(DeviceFileSource(filePath)).catchError((e) {
+          appLogger.warning('AudioSessionManager: DeviceFileSource play error caught cleanly: $e');
+        });
       }
-    } catch (e, st) {
-      appLogger.warning('AudioSessionManager: MediaPlayer error ($e). Falling back to native FlutterTts speech.');
+    } catch (e) {
+      appLogger.warning('AudioSessionManager: MediaPlayer error caught ($e). Voice assistant speech disabled per setting.');
       _playbackSubscription?.cancel();
       _playbackSubscription = null;
-
-      if (fallbackText != null && fallbackText.isNotEmpty) {
-        await speakText(fallbackText, onComplete: onComplete, onStart: onStart);
-      } else {
-        onComplete?.call();
-      }
+      onComplete?.call();
     }
   }
+
 
   /// Stops any currently playing audio file or native TTS.
   Future<void> stopPlayback() async {

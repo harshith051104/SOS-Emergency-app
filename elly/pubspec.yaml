@@ -25,6 +25,8 @@ dependencies:
   equatable: ^2.0.7
   shared_preferences: ^2.2.3
   url_launcher: ^6.3.0
+  permission_handler: ^11.3.1
+
 
   # ── Logging ──────────────────────────────────────────
   talker_flutter: ^4.4.0

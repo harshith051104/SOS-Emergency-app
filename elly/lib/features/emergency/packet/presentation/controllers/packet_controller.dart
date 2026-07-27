@@ -61,7 +61,11 @@ class EmergencyPacketController extends StateNotifier<EmergencyPacketState> {
         _timelineService = timelineService,
         super(const EmergencyPacketState(status: PacketStateStatus.loading)) {
     if (autoStart) {
-      _initCompilation();
+      // Defer compilation to after the first frame is fully flushed.
+      // addPostFrameCallback guarantees execution after build+layout+paint+semantics.
+      Future.microtask(() {
+        if (mounted) _initCompilation();
+      });
     }
   }
 
@@ -70,14 +74,17 @@ class EmergencyPacketController extends StateNotifier<EmergencyPacketState> {
   final TimelineService _timelineService;
 
   Future<void> _initCompilation() async {
-    state = const EmergencyPacketState(status: PacketStateStatus.building, buildingProgress: 0);
+    state = const EmergencyPacketState(status: PacketStateStatus.building);
 
     try {
       // Step-by-step pipeline compile delay so the M3 checklist renders dynamically
       for (var progress = 1; progress <= 6; progress++) {
         await Future<void>.delayed(const Duration(milliseconds: 300));
         if (!mounted) return;
-        state = state.copyWith(buildingProgress: progress);
+        final currentProgress = progress;
+        Future.microtask(() {
+          if (mounted) state = state.copyWith(buildingProgress: currentProgress);
+        });
       }
 
       // Reset the unified timeline log for clean compilation
@@ -89,19 +96,25 @@ class EmergencyPacketController extends StateNotifier<EmergencyPacketState> {
         type: 'Manual SOS',
       );
 
-      if (mounted) {
-        state = state.copyWith(
-          status: PacketStateStatus.ready,
-          packet: packet,
-        );
-      }
+      Future.microtask(() {
+        if (mounted) {
+          state = state.copyWith(
+            status: PacketStateStatus.ready,
+            packet: packet,
+            buildingProgress: 6,
+          );
+        }
+      });
     } catch (e) {
-      if (mounted) {
-        state = state.copyWith(
-          status: PacketStateStatus.failed,
-          errorMessage: e.toString(),
-        );
-      }
+      Future.microtask(() {
+        if (mounted) {
+          state = state.copyWith(
+            status: PacketStateStatus.failed,
+            errorMessage: e.toString(),
+          );
+        }
+      });
+
     }
   }
 }

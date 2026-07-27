@@ -19,6 +19,9 @@ void main() {
   // Ensure Flutter engine is ready before initialising plugins / logger.
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Ensure standard Flutter error handling is active.
+  FlutterError.onError = FlutterError.presentError;
+
   appLogger.info('ELLY starting up…');
 
   runApp(

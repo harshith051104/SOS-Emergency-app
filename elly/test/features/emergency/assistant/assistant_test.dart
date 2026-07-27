@@ -2,8 +2,8 @@
 ///
 /// Unit tests verifying ELLY Live Voice Assistant brain, prioritisation,
 /// deduplication, caching, and fallback policies.
+library;
 
-import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -47,9 +47,8 @@ void main() {
     });
 
     test('ignores identical location updates within 15 seconds', () {
-      final now = DateTime.now();
-      
       // First update
+
       brain.processLocationUpdate(address: '123 Safe St', accuracy: '5m');
       verify(() => mockScheduler.queueEvent(any())).called(1);
 
@@ -78,7 +77,7 @@ void main() {
   });
 
   group('ConversationPolicyEngine Rules —', () {
-    final policyEngine = const ConversationPolicyEngine();
+    const policyEngine = ConversationPolicyEngine();
 
     test('detects sensitive topics correctly', () {
       expect(policyEngine.isSensitive('I was assaulted'), isTrue);

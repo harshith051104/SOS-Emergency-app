@@ -1,6 +1,7 @@
 /// emergency_packet_page_test.dart
 ///
 /// Widget tests for the premium M3 EmergencyPacketPage.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -114,7 +115,7 @@ void main() {
   );
 
   testWidgets('renders compilation checklist when state is building', (WidgetTester tester) async {
-    final state = const EmergencyPacketState(
+    const state = EmergencyPacketState(
       status: PacketStateStatus.building,
       buildingProgress: 3,
     );

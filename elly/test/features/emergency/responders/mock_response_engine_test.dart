@@ -23,7 +23,7 @@ EmergencyEvent _event() => EmergencyEvent(
       id: 'test-event-id',
       type: EmergencyType.manual,
       status: EmergencyStatus.active,
-      createdAt: DateTime(2025, 1, 1, 12, 0),
+      createdAt: DateTime(2025, 1, 1, 12),
       activatedAt: DateTime(2025, 1, 1, 12, 0, 5),
     );
 
@@ -114,7 +114,7 @@ void main() {
         mockAcknowledgementDelayMs: 10,
       );
 
-      final r1 = _responder(id: 'r1', priority: 0);
+      final r1 = _responder();
       final r2 = _responder(
         id: 'r2',
         name: 'Emergency Services',

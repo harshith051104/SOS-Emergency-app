@@ -10,7 +10,6 @@ library;
 
 import '../repositories/responder_repository.dart';
 import '../services/emergency_response_engine.dart';
-import '../entities/responder.dart';
 import '../enums/responder_type.dart';
 import '../../../sos/domain/entities/emergency_event.dart';
 import '../../../../../core/utils/emergency_number_resolver.dart';

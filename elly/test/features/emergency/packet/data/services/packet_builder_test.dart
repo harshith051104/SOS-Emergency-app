@@ -1,6 +1,7 @@
 /// packet_builder_test.dart
 ///
 /// Unit tests for the EmergencyPacketBuilder pipeline.
+library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:elly/features/emergency/packet/data/services/packet_builder.dart';

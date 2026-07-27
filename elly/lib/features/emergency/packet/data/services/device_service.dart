@@ -71,7 +71,7 @@ class DeviceService {
     }
 
     // 3. Gather Hardware and OS info
-    String platform = Platform.isAndroid ? 'Android' : 'iOS';
+    final String platform = Platform.isAndroid ? 'Android' : 'iOS';
     String deviceName = 'Unknown Device';
     String osVersion = 'Unknown OS';
 

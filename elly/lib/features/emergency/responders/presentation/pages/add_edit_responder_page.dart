@@ -111,7 +111,7 @@ class _AddEditResponderPageState extends ConsumerState<AddEditResponderPage> {
 
             // Type dropdown.
             DropdownButtonFormField<ResponderType>(
-              value: _selectedType,
+              initialValue: _selectedType,
               decoration: _inputDecoration(
                 context,
                 label: 'Responder Type *',
@@ -203,7 +203,8 @@ class _AddEditResponderPageState extends ConsumerState<AddEditResponderPage> {
               ),
               value: _isEnabled,
               onChanged: (v) => setState(() => _isEnabled = v),
-              activeColor: AppColors.successGreen,
+              activeTrackColor: AppColors.successGreen,
+
               contentPadding: EdgeInsets.zero,
             ),
 

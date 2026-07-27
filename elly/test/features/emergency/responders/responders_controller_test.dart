@@ -61,7 +61,7 @@ void main() {
     when(() => mockGet()).thenAnswer((_) async => []);
   });
 
-  RespondersController _makeController() => RespondersController(
+  RespondersController makeController() => RespondersController(
         getRespondersUseCase: mockGet,
         saveResponderUseCase: mockSave,
         deleteResponderUseCase: mockDelete,
@@ -73,7 +73,7 @@ void main() {
       final r = _responder();
       when(() => mockGet()).thenAnswer((_) async => [r]);
 
-      final controller = _makeController();
+      final controller = makeController();
 
       // Wait for initial load (called in constructor).
       await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -88,7 +88,7 @@ void main() {
     test('sets error on use case exception', () async {
       when(() => mockGet()).thenThrow(Exception('DB error'));
 
-      final controller = _makeController();
+      final controller = makeController();
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       expect(controller.state.isLoading, isFalse);
@@ -104,7 +104,7 @@ void main() {
       when(() => mockGet()).thenAnswer((_) async => [r]);
       when(() => mockSave(r)).thenAnswer((_) async => r);
 
-      final controller = _makeController();
+      final controller = makeController();
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       await controller.saveResponder(r);
@@ -122,7 +122,7 @@ void main() {
       when(() => mockGet()).thenAnswer((_) async => []);
       when(() => mockDelete('test-1')).thenAnswer((_) async {});
 
-      final controller = _makeController();
+      final controller = makeController();
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       await controller.deleteResponder('test-1');
@@ -135,12 +135,12 @@ void main() {
 
   group('RespondersController — reorder', () {
     test('applies optimistic update and calls use case', () async {
-      final r0 = _responder(id: 'a', priority: 0);
+      final r0 = _responder(id: 'a');
       final r1 = _responder(id: 'b', priority: 1);
       when(() => mockGet()).thenAnswer((_) async => [r0, r1]);
       when(() => mockReorder(any())).thenAnswer((_) async {});
 
-      final controller = _makeController();
+      final controller = makeController();
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
       // Move index 0 → index 1 (swap).

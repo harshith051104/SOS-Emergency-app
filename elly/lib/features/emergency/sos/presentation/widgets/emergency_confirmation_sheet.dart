@@ -59,7 +59,8 @@ class EmergencyConfirmationSheet extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.sosPrimary.withOpacity(0.12),
+                color: AppColors.sosPrimary.withValues(alpha: 0.12),
+
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -120,7 +121,7 @@ class EmergencyConfirmationSheet extends StatelessWidget {
                 foregroundColor: colorScheme.onSurfaceVariant,
                 minimumSize: const Size.fromHeight(48),
               ),
-              child: Text(AppStrings.confirmationCancel),
+              child: const Text(AppStrings.confirmationCancel),
             ),
           ],
         ),

@@ -20,6 +20,10 @@ class AssistantBrain {
   final ConversationPolicyEngine _policyEngine;
   final VoiceScheduler _scheduler;
 
+  ConversationPolicyEngine get policyEngine => _policyEngine;
+  VoiceScheduler get scheduler => _scheduler;
+
+
   // Deduplication state variables
   DateTime? _lastLocationTime;
   String? _lastLocationAddress;
@@ -82,7 +86,7 @@ class AssistantBrain {
 
   /// Decides if a GPS lost event should trigger a warning.
   void processGpsLost() {
-    final eventId = 'gps_lost_warning';
+    const eventId = 'gps_lost_warning';
     if (_spokenSystemUpdates.contains(eventId)) return;
 
     _spokenSystemUpdates.add(eventId);
@@ -99,7 +103,7 @@ class AssistantBrain {
 
   /// Decides if a data packet completion event should trigger a spoken notification.
   void processPacketCompleted() {
-    final eventId = 'packet_compiled_announcement';
+    const eventId = 'packet_compiled_announcement';
     if (_spokenSystemUpdates.contains(eventId)) return;
 
     _spokenSystemUpdates.add(eventId);

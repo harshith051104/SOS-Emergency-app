@@ -1,6 +1,7 @@
 /// packet_controller_test.dart
 ///
 /// Unit and provider tests for the EmergencyPacketController.
+library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

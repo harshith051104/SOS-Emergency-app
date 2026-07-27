@@ -83,24 +83,26 @@ class _EmergencyCountdownWidgetState extends State<EmergencyCountdownWidget>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        return FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Text(
-              '${widget.value}',
-              style: theme.textTheme.displayLarge?.copyWith(
-                color: AppColors.sosPrimary,
-                fontWeight: FontWeight.w900,
-                fontSize: 100,
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return FadeTransition(
+            opacity: _fadeAnimation,
+            child: ScaleTransition(
+              scale: _scaleAnimation,
+              child: Text(
+                '${widget.value}',
+                style: theme.textTheme.displayLarge?.copyWith(
+                  color: AppColors.sosPrimary,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 100,
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

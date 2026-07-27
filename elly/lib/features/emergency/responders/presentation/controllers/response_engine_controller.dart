@@ -9,6 +9,7 @@ library;
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:elly/core/utils/app_logger.dart';
@@ -85,29 +86,31 @@ class ResponseEngineController extends StateNotifier<ResponseEngineState> {
 
     _subscription = stream.listen(
       (update) {
-        if (!mounted) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
 
-        final updatedList = [...state.updates, update];
+          final updatedList = [...state.updates, update];
 
-        // Extract the emergency summary when it is generated.
-        final summary = update.type == ResponseUpdateType.generatingSummary
-            ? update.message
-            : state.emergencySummary;
+          // Extract the emergency summary when it is generated.
+          final summary = update.type == ResponseUpdateType.generatingSummary
+              ? update.message
+              : state.emergencySummary;
 
-        final isTerminal = update.type.isTerminal;
+          final isTerminal = update.type.isTerminal;
 
-        state = state.copyWith(
-          updates: updatedList,
-          emergencySummary: summary,
-          isRunning: !isTerminal,
-          isCompleted: isTerminal,
-        );
-
-        if (isTerminal) {
-          appLogger.info(
-            'ResponseEngineController: terminal event received — ${update.type}',
+          state = state.copyWith(
+            updates: updatedList,
+            emergencySummary: summary,
+            isRunning: !isTerminal,
+            isCompleted: isTerminal,
           );
-        }
+
+          if (isTerminal) {
+            appLogger.info(
+              'ResponseEngineController: terminal event received — ${update.type}',
+            );
+          }
+        });
       },
       onError: (Object e, StackTrace st) {
         appLogger.error('ResponseEngineController: stream error', e, st);

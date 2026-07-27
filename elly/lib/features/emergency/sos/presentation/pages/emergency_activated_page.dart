@@ -70,7 +70,8 @@ class EmergencyActivatedPage extends ConsumerWidget {
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontSize: 12,
                         color: theme.colorScheme.onSurfaceVariant
-                            .withOpacity(0.5),
+                            .withValues(alpha: 0.5),
+
                         fontFamily: 'monospace',
                       ),
                     ),
@@ -103,7 +104,7 @@ class EmergencyActivatedPage extends ConsumerWidget {
                   // ── Return Home button ───────────────────────────────────
                   OutlinedButton.icon(
                     icon: const Icon(Icons.home_outlined),
-                    label: Text(AppStrings.activatedReturnHome),
+                    label: const Text(AppStrings.activatedReturnHome),
                     onPressed: () => _returnHome(context, ref),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(52),

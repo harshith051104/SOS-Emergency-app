@@ -9,9 +9,11 @@ import 'package:elly/features/emergency/sos/domain/enums/emergency_status.dart';
 import 'package:elly/features/emergency/sos/domain/enums/emergency_type.dart';
 import 'package:elly/features/emergency/sos/presentation/pages/emergency_activated_page.dart';
 import 'package:elly/features/emergency/sos/presentation/providers/emergency_providers.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+
+
 
 import '../../../../../helpers/test_helpers.dart';
 
@@ -21,8 +23,8 @@ void main() {
       id: 'abcd-1234-efgh-5678',
       type: EmergencyType.manual,
       status: EmergencyStatus.active,
-      createdAt: DateTime(2024, 1, 1),
-      activatedAt: DateTime(2024, 1, 1),
+      createdAt: DateTime(2024),
+      activatedAt: DateTime(2024),
     );
 
     testWidgets('renders title and description', (tester) async {

@@ -7,7 +7,6 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/theme/app_colors.dart';
 
 /// Displays an animated check mark circle for the activated state.
@@ -121,7 +120,8 @@ class _SuccessPainter extends CustomPainter {
 
     // ── Background fill ────────────────────────────────────────────────────
     final bgPaint = Paint()
-      ..color = AppColors.successGreen.withOpacity(0.12 * circleProgress)
+      ..color = AppColors.successGreen.withValues(alpha: 0.12 * circleProgress)
+
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(center, radius * circleProgress, bgPaint);
@@ -158,7 +158,7 @@ class _SuccessPainter extends CustomPainter {
 
       // First segment progress.
       const seg1Weight = 0.45;
-      final seg2Start = seg1Weight;
+      const seg2Start = seg1Weight;
 
       final path = Path();
       path.moveTo(startPoint.dx, startPoint.dy);

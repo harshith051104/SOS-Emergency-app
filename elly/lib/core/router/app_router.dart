@@ -26,16 +26,18 @@ import '../../features/emergency/responders/presentation/pages/add_edit_responde
 import '../../features/emergency/responders/presentation/pages/response_status_page.dart';
 import '../../features/emergency/responders/presentation/pages/responders_page.dart';
 import '../../features/emergency/sos/domain/enums/emergency_status.dart';
-import '../../features/emergency/sos/presentation/pages/emergency_activated_page.dart';
-import '../../features/emergency/sos/presentation/pages/emergency_confirmation_page.dart';
 import '../../features/emergency/sos/presentation/pages/emergency_countdown_page.dart';
-import '../../features/emergency/sos/presentation/pages/emergency_generating_page.dart';
-import '../../features/emergency/sos/presentation/pages/emergency_session_page.dart';
-import '../../features/emergency/sos/presentation/pages/emergency_report_page.dart';
+
 import '../../features/emergency/sos/presentation/pages/home_page.dart';
+
+import '../../features/emergency/sos/presentation/pages/emergency_report_page.dart';
 import '../../features/emergency/sos/presentation/providers/emergency_providers.dart';
+import '../../features/emergency/sos/presentation/pages/emergency_service_selection_page.dart';
+
 import '../../features/emergency/packet/presentation/pages/emergency_packet_page.dart';
 import '../../features/emergency/packet/presentation/pages/emergency_debug_page.dart';
+
+
 
 /// Route path constants — no hardcoded strings in widget code.
 abstract final class AppRoutes {
@@ -50,8 +52,10 @@ abstract final class AppRoutes {
   static String emergencyPacket(String id) => '/emergency/session/${Uri.encodeComponent(id)}/packet';
   static const String emergencyDebug = '/emergency/debug';
   static const String emergencyCountdown = '/emergency/countdown';
+  static const String emergencyServiceSelection = '/emergency/service-selection';
   static const String emergencyActivated = '/emergency/activated';
   static const String emergencyResponseStatus = '/emergency/response-status';
+
 
   // ── Responders management ─────────────────────────────────────────────────
   static const String responders = '/responders';
@@ -63,7 +67,6 @@ abstract final class AppRoutes {
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.home,
-    debugLogDiagnostics: true,
     routes: [
       // ── Home ──────────────────────────────────────────────────────────────
       GoRoute(
@@ -72,38 +75,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HomePage(),
       ),
 
-      // ── Emergency: Confirmation (new flow) ────────────────────────────────
+      // ── Emergency: Single Dashboard Flow (Redirect to Home Dashboard) ───
       GoRoute(
         path: AppRoutes.emergencyConfirmation,
         name: 'emergencyConfirmation',
-        redirect: (context, state) {
-          final status = ref.read(emergencyStatusProvider);
-          final allowed = status == EmergencyStatus.awaitingConfirmation ||
-              status == EmergencyStatus.activating;
-          return allowed ? null : AppRoutes.home;
-        },
-        builder: (context, state) => const EmergencyConfirmationPage(),
+        redirect: (context, state) => AppRoutes.home,
+        builder: (context, state) => const HomePage(),
       ),
 
-      // ── Emergency: Generating Packet (Bypassed) ─────────────────────────
       GoRoute(
         path: AppRoutes.emergencyGenerating,
         name: 'emergencyGenerating',
-        redirect: (context, state) => AppRoutes.emergencySession,
-        builder: (context, state) => const EmergencyGeneratingPage(),
+        builder: (context, state) => const HomePage(),
       ),
 
-      // ── Emergency: Live Session Dashboard ──────────────────────────────────
       GoRoute(
         path: AppRoutes.emergencySession,
         name: 'emergencySession',
-        redirect: (context, state) {
-          final status = ref.read(emergencyStatusProvider);
-          final allowed = status == EmergencyStatus.active;
-          return allowed ? null : AppRoutes.home;
-        },
-        builder: (context, state) => const EmergencySessionPage(),
+        builder: (context, state) => const HomePage(),
       ),
+
+
 
       // ── Emergency: Packet Details ──────────────────────────────────────────
       GoRoute(
@@ -133,18 +125,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const EmergencyReportPage(),
       ),
 
-      // ── Emergency: Countdown (legacy flow) ────────────────────────────────
+      // ── Emergency: Countdown ───────────────────────────────────────────────
       GoRoute(
         path: AppRoutes.emergencyCountdown,
         name: 'emergencyCountdown',
-        redirect: (context, state) {
-          final status = ref.read(emergencyStatusProvider);
-          final allowed = status == EmergencyStatus.countdown ||
-              status == EmergencyStatus.activating;
-          return allowed ? null : AppRoutes.home;
-        },
         builder: (context, state) => const EmergencyCountdownPage(),
       ),
+
+      // ── Emergency: Service Selection (Sprint 4) ───────────────────────────
+      GoRoute(
+        path: AppRoutes.emergencyServiceSelection,
+        name: 'emergencyServiceSelection',
+        builder: (context, state) => const EmergencyServiceSelectionPage(),
+      ),
+
 
       // ── Emergency: Activated ──────────────────────────────────────────────
       GoRoute(
@@ -154,8 +148,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final status = ref.read(emergencyStatusProvider);
           return status == EmergencyStatus.active ? null : AppRoutes.home;
         },
-        builder: (context, state) => const EmergencyActivatedPage(),
+        builder: (context, state) => const HomePage(),
       ),
+
 
       // ── Emergency: Response Status (live engine timeline) ─────────────────
       GoRoute(
