@@ -58,12 +58,16 @@ class DeviceService {
         }
 
         // Test internet availability
-        try {
-          final lookup = await InternetAddress.lookup('dns.google')
-              .timeout(const Duration(milliseconds: 1000));
-          isInternetAvailable = lookup.isNotEmpty && lookup.first.rawAddress.isNotEmpty;
-        } catch (_) {
-          isInternetAvailable = false;
+        if (kIsWeb) {
+          isInternetAvailable = true;
+        } else {
+          try {
+            final lookup = await InternetAddress.lookup('dns.google')
+                .timeout(const Duration(milliseconds: 1000));
+            isInternetAvailable = lookup.isNotEmpty && lookup.first.rawAddress.isNotEmpty;
+          } catch (_) {
+            isInternetAvailable = false;
+          }
         }
       }
     } catch (e) {
@@ -71,12 +75,16 @@ class DeviceService {
     }
 
     // 3. Gather Hardware and OS info
-    final String platform = Platform.isAndroid ? 'Android' : 'iOS';
-    String deviceName = 'Unknown Device';
-    String osVersion = 'Unknown OS';
+    final String platform = kIsWeb ? 'Web' : (Platform.isAndroid ? 'Android' : 'iOS');
+    String deviceName = kIsWeb ? 'Web Browser' : 'Unknown Device';
+    String osVersion = kIsWeb ? 'Web Platform' : 'Unknown OS';
 
     try {
-      if (Platform.isAndroid) {
+      if (kIsWeb) {
+        final webInfo = await _deviceInfo.webBrowserInfo;
+        deviceName = webInfo.browserName.name;
+        osVersion = webInfo.userAgent ?? 'Web Browser';
+      } else if (Platform.isAndroid) {
         final androidInfo = await _deviceInfo.androidInfo;
         deviceName = '${androidInfo.brand} ${androidInfo.model}';
         osVersion = 'Android ${androidInfo.version.release} (API ${androidInfo.version.sdkInt})';
@@ -94,10 +102,13 @@ class DeviceService {
     String locale = 'en_US';
     try {
       timeZone = DateTime.now().timeZoneName;
-      locale = Platform.localeName;
+      if (!kIsWeb) {
+        locale = Platform.localeName;
+      }
     } catch (e) {
       debugPrint('DeviceService: Failed to resolve locale/timezone: $e');
     }
+
 
     return DeviceSection(
       batteryPercent: batteryPercent,

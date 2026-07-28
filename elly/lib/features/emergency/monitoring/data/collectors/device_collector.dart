@@ -41,7 +41,7 @@ class DeviceCollector extends BaseTelemetryCollector<DeviceTelemetry> {
         isScreenLocked: false,
         deviceName: 'Generic Device',
         osVersion: 'Unknown OS',
-        platform: Platform.isAndroid ? 'Android' : 'iOS',
+        platform: kIsWeb ? 'Web' : (Platform.isAndroid ? 'Android' : 'iOS'),
         timeZone: 'UTC',
         locale: 'en',
       );
@@ -60,12 +60,16 @@ class DeviceCollector extends BaseTelemetryCollector<DeviceTelemetry> {
       isBatterySaverEnabled = await _battery.isInBatterySaveMode;
     } catch (_) {}
 
-    final String platform = Platform.isAndroid ? 'Android' : 'iOS';
-    String deviceName = 'Generic Device';
-    String osVersion = 'Unknown OS';
+    final String platform = kIsWeb ? 'Web' : (Platform.isAndroid ? 'Android' : 'iOS');
+    String deviceName = kIsWeb ? 'Web Browser' : 'Generic Device';
+    String osVersion = kIsWeb ? 'Web Platform' : 'Unknown OS';
 
     try {
-      if (Platform.isAndroid) {
+      if (kIsWeb) {
+        final webInfo = await _deviceInfo.webBrowserInfo;
+        deviceName = webInfo.browserName.name;
+        osVersion = webInfo.userAgent ?? 'Web Browser';
+      } else if (Platform.isAndroid) {
         final androidInfo = await _deviceInfo.androidInfo;
         deviceName = '${androidInfo.brand} ${androidInfo.model}';
         osVersion = 'Android ${androidInfo.version.release} (API ${androidInfo.version.sdkInt})';
@@ -80,8 +84,11 @@ class DeviceCollector extends BaseTelemetryCollector<DeviceTelemetry> {
     String locale = 'en_US';
     try {
       timeZone = DateTime.now().timeZoneName;
-      locale = Platform.localeName;
+      if (!kIsWeb) {
+        locale = Platform.localeName;
+      }
     } catch (_) {}
+
 
     return DeviceTelemetry(
       batteryPercent: batteryPercent,

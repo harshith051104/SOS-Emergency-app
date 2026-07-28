@@ -11,8 +11,10 @@ library;
 import 'package:flutter/material.dart';
 
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 import '../../../../../core/constants/app_strings.dart';
+
 import '../../../../../core/theme/app_colors.dart';
 
 /// Large circular SOS button with ambient pulse animation.
@@ -58,9 +60,10 @@ class _SosButtonState extends State<SosButton>
       duration: const Duration(milliseconds: 1800),
     );
 
-    if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+    if (kIsWeb || !Platform.environment.containsKey('FLUTTER_TEST')) {
       _pulseController.repeat(reverse: true);
     }
+
 
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.12).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),

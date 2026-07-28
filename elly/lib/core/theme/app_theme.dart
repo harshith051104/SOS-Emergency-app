@@ -7,10 +7,13 @@
 library;
 
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
+
+bool get _isTesting => !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
 
 /// ELLY Material 3 theme factory.
 abstract final class AppTheme {
@@ -43,7 +46,7 @@ abstract final class AppTheme {
     double? letterSpacing,
     double? height,
   }) {
-    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+    if (_isTesting) {
       return TextStyle(
         fontSize: fontSize,
         fontWeight: fontWeight,
@@ -69,10 +72,10 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: colorScheme.surface,
     );
 
-    final isTesting = Platform.environment.containsKey('FLUTTER_TEST');
-    final textThemeBase = isTesting
+    final textThemeBase = _isTesting
         ? base.textTheme
         : GoogleFonts.interTextTheme(base.textTheme);
+
 
     return base.copyWith(
       // ── Typography ─────────────────────────────────────────────────────
