@@ -24,6 +24,9 @@ import 'package:elly/features/emergency/health_passport/presentation/providers/h
 import 'package:elly/features/emergency/session/presentation/providers/session_providers.dart';
 import 'package:elly/features/emergency/session/domain/entities/emergency_timeline_event.dart';
 import 'package:elly/features/emergency/offline/presentation/providers/offline_providers.dart';
+import 'package:elly/features/emergency/global/domain/services/country_resolver.dart';
+import 'package:elly/features/emergency/global/domain/entities/emergency_service_directory.dart';
+import 'package:elly/features/emergency/telemetry/presentation/providers/telemetry_providers.dart';
 
 enum EmergencySessionStep {
   idle,
@@ -137,16 +140,27 @@ class EmergencySessionController extends StateNotifier<EmergencySessionState> {
 
     state = state.copyWith(step: EmergencySessionStep.countdownRunning);
 
-    // Ensure Universal (112) is selected by default at countdown start
-    final serviceNotifier = _ref.read(emergencyServiceProvider.notifier);
-    final services = _ref.read(emergencyServiceProvider).services;
-    if (services.isNotEmpty) {
-      final universal = services.firstWhere(
-        (s) => s.id == 'srv_universal',
-        orElse: () => services.first,
-      );
-      serviceNotifier.selectService(universal);
-    }
+    // Auto-select emergency helpline based on live GPS location coordinates
+    final telemetryState = _ref.read(telemetryControllerProvider);
+    final countryResult = CountryResolver.resolve(location: telemetryState.latestPoint);
+    final countryProfile = EmergencyServiceDirectory.getProfile(countryResult.countryCode);
+    final resolvedNumber = countryProfile.universalNumber;
+
+
+
+    final autoSelectedService = EmergencyService(
+      id: 'srv_universal_${countryProfile.countryCode}',
+      name: 'Universal Emergency (${countryProfile.countryName})',
+      description: 'Live GPS Emergency Line for ${countryProfile.countryName}',
+      emergencyNumber: resolvedNumber,
+      icon: Icons.emergency_rounded,
+      category: 'universal',
+      priority: 6,
+    );
+
+    _ref.read(emergencyServiceProvider.notifier).selectService(autoSelectedService);
+    state = state.copyWith(selectedService: autoSelectedService);
+
 
     _ref.read(emergencyEventBusProvider).publish('ConfirmationStarted', {
       'confirmationId': confId,

@@ -1,7 +1,7 @@
 /// home_page.dart
 ///
 /// Single State-Driven Emergency Control Center Dashboard for ELLY.
-/// Morphing in-place across 5 UI states while preserving 100% of backend engines.
+/// Morphing in-place across UI states while preserving 100% of backend engines and DDD architecture.
 
 library;
 
@@ -16,42 +16,30 @@ import 'package:elly/features/emergency/sos/presentation/controllers/emergency_s
 
 import 'package:elly/features/emergency/monitoring/presentation/providers/developer_mode_provider.dart';
 import 'package:elly/features/emergency/monitoring/presentation/widgets/mode_toggle_switch.dart';
-
 import 'package:elly/features/emergency/monitoring/presentation/widgets/developer_telemetry_console.dart';
 import 'package:elly/features/emergency/responders/presentation/providers/responder_providers.dart';
 
-
 // Dashboard Cards
 import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/protection_header_card.dart';
-import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/hero_sos_button_card.dart';
-import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/live_responder_pipeline_card.dart';
-import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/sos_circle_card.dart';
-import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/health_passport_card.dart';
-
 import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/trigger_methods_card.dart';
-
+import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/sos_circle_card.dart';
+import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/live_responder_pipeline_card.dart';
+import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/location_sharing_card.dart';
+import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/health_passport_card.dart';
+import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/floating_quick_actions.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/session_summary_card.dart';
 
 // Detail Modal Sheets
 import 'package:elly/features/emergency/sos/presentation/widgets/details/trigger_methods_detail_sheet.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/details/sos_circle_detail_sheet.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/details/health_passport_detail_sheet.dart';
+import 'package:elly/features/emergency/sos/presentation/widgets/details/sos_flow_detail_sheet.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/emergency_activation_bottom_sheet.dart';
 
 
-
 import 'package:elly/features/emergency/communication/presentation/controllers/emergency_communication_controller.dart';
-
 import 'package:elly/features/emergency/telemetry/presentation/providers/telemetry_providers.dart';
 import 'package:elly/features/emergency/readiness/presentation/providers/readiness_providers.dart';
-
-
-
-
-
-
-
-
 
 enum DashboardUiState {
   normalProtection,
@@ -128,16 +116,13 @@ class _HomePageState extends ConsumerState<HomePage> {
       }
     });
 
-
     final isDevMode = ref.watch(isDeveloperModeProvider);
     final status = ref.watch(emergencyStatusProvider);
 
-    final controllerNotifier = ref.watch(emergencyControllerProvider.notifier);
     final controllerState = ref.watch(emergencyControllerProvider);
     final session = controllerState.activeSession;
     final respondersState = ref.watch(respondersControllerProvider);
     final responders = respondersState.responders;
-
 
     final isActiveSos = status == EmergencyStatus.active ||
         status == EmergencyStatus.generatingPacket ||
@@ -146,209 +131,219 @@ class _HomePageState extends ConsumerState<HomePage> {
         _uiState == DashboardUiState.activeSos;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // ── Main Content (Dev Console vs User Control Center Dashboard) ──
-            if (isDevMode)
-              Positioned.fill(
-                top: 60,
-                child: DeveloperTelemetryConsole(sessionId: session?.sessionId),
-              )
-            else
-              Column(
-                children: [
-                  const SizedBox(height: 56), // Space for top bars
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleSpacing: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.chevron_left_rounded,
+            size: 26,
+            color: isDark ? Colors.white : const Color(0xFF1E293B),
+          ),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: Text(
+          'SOS & Emergency',
+          style: TextStyle(
+            fontSize: 15.5,
+            fontWeight: FontWeight.w800,
+            color: isDark ? Colors.white : const Color(0xFF0F172A),
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        centerTitle: false,
+        actions: [
+          const ModeToggleSwitch(compact: true),
+          IconButton(
+            icon: Icon(
+              Icons.more_vert_rounded,
+              color: isDark ? Colors.white70 : const Color(0xFF64748B),
+            ),
+            onPressed: () {},
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
+      body: Stack(
+        children: [
+          // ── Main Content (Dev Console vs User Control Center Dashboard) ──
+          if (isDevMode)
+            Positioned.fill(
+              child: DeveloperTelemetryConsole(sessionId: session?.sessionId),
+            )
+          else
+            ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              children: [
+                // Section 1: Protection Header Card (Top Banner)
+                ProtectionHeaderCard(
+                  isDark: isDark,
+                  readinessScore: ref.watch(readinessControllerProvider).readinessScore,
+                  isActiveSos: isActiveSos,
+                  elapsedFormatted: controllerState.formattedDuration,
+                  onTestSos: isActiveSos
+                      ? () => _endEmergency(context)
+                      : () => _triggerSosFlow(context, isTest: true),
+                ),
+                const SizedBox(height: 16),
 
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      children: [
-                        // Card 1: Protection Header Banner (Shows END EMERGENCY SESSION button at top when active)
-                         ProtectionHeaderCard(
-                          isDark: isDark,
-                          readinessScore: ref.watch(readinessControllerProvider).readinessScore,
-
-                          isActiveSos: isActiveSos,
-                          elapsedFormatted: controllerState.formattedDuration,
-                          onTestSos: isActiveSos ? () => _endEmergency(context) : () => _triggerSosFlow(context, isTest: true),
-                        ),
-                        const SizedBox(height: 14),
-
-                        // State View: Normal vs Active vs Resolved
-                        if (_uiState == DashboardUiState.resolved)
-
-                          SessionSummaryCard(
-                            isDark: isDark,
-                            durationFormatted: controllerState.formattedDuration.isNotEmpty ? controllerState.formattedDuration : '04:12',
-                            packetsSent: 18,
-                            respondersReached: responders.isNotEmpty ? responders.length : 3,
-                            onDone: () {
-                              setState(() {
-                                _uiState = DashboardUiState.normalProtection;
-                              });
-                            },
-                          )
-
-                        else ...[
-                          // Section 2: How SOS Should Trigger
-                          TriggerMethodsCard(
-                            isDark: isDark,
-                            onViewAll: () => _openSheet(context, const TriggerMethodsDetailSheet()),
-                          ),
-                          const SizedBox(height: 14),
-
-                          // Section 3: Large SOS Button
-                          HeroSosButtonCard(
-                            isLocked: controllerNotifier.isLocked,
-                            isActive: isActiveSos,
-                            onTap: () => _triggerSosFlow(context),
-                          ),
-                          const SizedBox(height: 18),
-
-                          // Section 4: SOS Circle
-                          SosCircleCard(
-                            isDark: isDark,
-                            isActiveSos: isActiveSos,
-                            onViewAll: () => _openSheet(context, const SosCircleDetailSheet()),
-                          ),
-
-                          const SizedBox(height: 14),
-
-                          // Section 5: Live Responder Pipeline
-                          LiveResponderPipelineCard(
-                            isDark: isDark,
-                            isActiveSos: isActiveSos,
-                            respondersCount: responders.length,
-                          ),
-                          const SizedBox(height: 14),
-
-
-                          // Section 6: Emergency Health Passport
-                          HealthPassportCard(
-                            isDark: isDark,
-                            isActiveSos: isActiveSos,
-                            onViewAll: () => _openSheet(context, const HealthPassportDetailSheet()),
-                          ),
-                          const SizedBox(height: 100),
-
-
-
-
-
-
-
-
-
-                        ],
-
-                      ],
-                    ),
+                // State View: Normal vs Active vs Resolved
+                if (_uiState == DashboardUiState.resolved)
+                  SessionSummaryCard(
+                    isDark: isDark,
+                    durationFormatted: controllerState.formattedDuration.isNotEmpty
+                        ? controllerState.formattedDuration
+                        : '04:12',
+                    packetsSent: 18,
+                    respondersReached: responders.isNotEmpty ? responders.length : 3,
+                    onDone: () {
+                      setState(() {
+                        _uiState = DashboardUiState.normalProtection;
+                      });
+                    },
+                  )
+                else ...[
+                  // Section 2: How SOS is Triggered
+                  TriggerMethodsCard(
+                    isDark: isDark,
+                    onViewAll: () => _openSheet(context, const TriggerMethodsDetailSheet()),
                   ),
-                ],
-              ),
+                  const SizedBox(height: 16),
 
-            // ── Top Mode Toggle Bar ─────────────────────────────────────
-            const Positioned(
-              top: 12,
-              left: 16,
-              child: ModeToggleSwitch(compact: true),
+                  // Section 3: SOS Circle (Who will be notified)
+                  SosCircleCard(
+                    isDark: isDark,
+                    isActiveSos: isActiveSos,
+                    onViewAll: () => _openSheet(context, const SosCircleDetailSheet()),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Section 4: What happens during SOS (6 Step Flow)
+                  LiveResponderPipelineCard(
+                    isDark: isDark,
+                    isActiveSos: isActiveSos,
+                    onViewLocationDetails: () => _openSheet(context, const SosFlowDetailSheet()),
+
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Section 5: Live Location Sharing Card
+                  LocationSharingCard(
+                    isDark: isDark,
+                    isActiveSos: isActiveSos,
+                    onViewDetails: () {},
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Section 6: Emergency Health Passport (Shared during SOS)
+                  HealthPassportCard(
+                    isDark: isDark,
+                    isActiveSos: isActiveSos,
+                    onViewAll: () => _openSheet(context, const HealthPassportDetailSheet()),
+                  ),
+                  SizedBox(height: isActiveSos ? 160 : 100), // Extra bottom padding for active banner
+                ],
+              ],
             ),
 
-            // ── Sticky Floating ACTIVE SOS EMERGENCY Timer Banner (Bottom Position) ──
-            if (isActiveSos)
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 16,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.cardDark : AppColors.cardLight,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.sosPrimary, width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.sosPrimary.withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: const BoxDecoration(
-                              color: AppColors.sosPrimary,
-                              shape: BoxShape.circle,
+          // ── Sticky Floating ACTIVE SOS EMERGENCY Timer Banner ──
+          if (isActiveSos && !isDevMode)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 12,
+              child: Container(
+
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.cardDark : AppColors.cardLight,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.sosPrimary, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.sosPrimary.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            color: AppColors.sosPrimary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'ACTIVE SOS EMERGENCY',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 12,
+                                color: AppColors.sosPrimary,
+                                letterSpacing: 1.0,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text(
-                                'ACTIVE SOS EMERGENCY',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 12,
-                                  color: AppColors.sosPrimary,
-                                  letterSpacing: 1.0,
-                                ),
+                            Text(
+                              'Elapsed: ${controllerState.formattedDuration}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : Colors.black87,
+                                fontFamily: 'monospace',
                               ),
-                              Text(
-                                'Elapsed: ${controllerState.formattedDuration}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark ? Colors.white : Colors.black87,
-                                  fontFamily: 'monospace',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.sosPrimary,
-                          borderRadius: BorderRadius.circular(8),
+                            ),
+                          ],
                         ),
-                        child: const Text(
-                          'LIVE',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.sosPrimary,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ],
-                  ),
+                      child: const Text(
+                        'LIVE',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-
-          ],
-        ),
+            ),
+        ],
       ),
+      bottomNavigationBar: isDevMode
+          ? null
+          : FloatingQuickActionsBar(
+              isDark: isDark,
+              onCallEmergency: () => _triggerSosFlow(context),
+              onMessageCircle: () => _openSheet(context, const SosCircleDetailSheet()),
+            ),
+
     );
-
-
   }
-
-
 
   void _triggerSosFlow(BuildContext context, {bool isTest = false}) {
     ref.read(emergencySessionControllerProvider.notifier).startSos();
     _openSheet(context, const EmergencyActivationBottomSheet());
   }
-
-
-
 
   Future<void> _endEmergency(BuildContext context) async {
     ref.read(emergencyControllerProvider.notifier).resetToIdle();
@@ -356,9 +351,6 @@ class _HomePageState extends ConsumerState<HomePage> {
       _uiState = DashboardUiState.normalProtection;
     });
   }
-
-
-
 
   void _openSheet(BuildContext context, Widget sheet) {
     showModalBottomSheet(

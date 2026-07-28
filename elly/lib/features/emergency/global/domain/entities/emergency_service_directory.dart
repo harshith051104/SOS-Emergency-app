@@ -18,6 +18,7 @@ class EmergencyServiceDirectory {
       timeZone: 'Asia/Kolkata',
       currency: 'INR',
       medicalNumber: '108',
+
       policeNumber: '100',
       fireNumber: '101',
       embassyContact: EmbassyContact(
@@ -50,6 +51,7 @@ class EmergencyServiceDirectory {
       defaultLanguage: 'en_US',
       timeZone: 'America/New_York',
       currency: 'USD',
+      universalNumber: '911',
       medicalNumber: '911',
       policeNumber: '911',
       fireNumber: '911',
@@ -69,6 +71,7 @@ class EmergencyServiceDirectory {
       defaultLanguage: 'en_CA',
       timeZone: 'America/Toronto',
       currency: 'CAD',
+      universalNumber: '911',
       medicalNumber: '911',
       policeNumber: '911',
       fireNumber: '911',
@@ -87,6 +90,7 @@ class EmergencyServiceDirectory {
       defaultLanguage: 'en_GB',
       timeZone: 'Europe/London',
       currency: 'GBP',
+      universalNumber: '999',
       medicalNumber: '999',
       policeNumber: '999',
       fireNumber: '999',
@@ -106,6 +110,7 @@ class EmergencyServiceDirectory {
       timeZone: 'Europe/Paris',
       currency: 'EUR',
       medicalNumber: '112',
+
       policeNumber: '112',
       fireNumber: '112',
     ),
@@ -116,11 +121,13 @@ class EmergencyServiceDirectory {
       defaultLanguage: 'en_AU',
       timeZone: 'Australia/Sydney',
       currency: 'AUD',
+      universalNumber: '000',
       medicalNumber: '000',
       policeNumber: '000',
       fireNumber: '000',
       disasterNumber: '000',
     ),
+
     'JP': CountryProfile(
       countryCode: 'JP',
       countryName: 'Japan',

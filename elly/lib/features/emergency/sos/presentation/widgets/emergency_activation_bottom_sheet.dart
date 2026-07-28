@@ -1,9 +1,8 @@
 /// emergency_activation_bottom_sheet.dart
 ///
-/// Merged Emergency Activation Bottom Sheet (UX Refactor).
-/// Combines 10-second countdown, single-selection emergency service picker,
-/// SEND NOW / CANCEL actions, and auto-fallback notice into one high-efficiency sheet.
-/// Everything stays directly on the main Dashboard (HomePage).
+/// Merged Emergency Activation Bottom Sheet.
+/// Automatically targets Universal Emergency Service with support for international standards
+/// (112, 911, 999, 000) and automatic regional CountryResolver detection.
 
 library;
 
@@ -11,15 +10,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import '../../../../../core/theme/app_colors.dart';
 import '../../domain/entities/sos_countdown_state.dart';
+import '../../domain/entities/emergency_service_model.dart';
 
 import '../providers/sos_countdown_provider.dart';
 import '../providers/emergency_service_provider.dart';
 import '../controllers/emergency_session_controller.dart';
 import '../../../communication/presentation/controllers/emergency_communication_controller.dart';
 
+import '../../../global/domain/services/country_resolver.dart';
+import '../../../global/domain/entities/emergency_service_directory.dart';
+import '../../../telemetry/presentation/providers/telemetry_providers.dart';
 
 
 class EmergencyActivationBottomSheet extends ConsumerWidget {
@@ -27,18 +29,26 @@ class EmergencyActivationBottomSheet extends ConsumerWidget {
 
   void _dispatchEmergency(BuildContext context, WidgetRef ref) {
     final selectionState = ref.read(emergencyServiceProvider);
-    final selectedService = selectionState.selectedService;
+    final selectedService = selectionState.selectedService ??
+        const EmergencyService(
+          id: 'srv_universal',
+          name: 'Universal Emergency',
+          description: 'National Unified Emergency Response Standard',
+          emergencyNumber: '112',
+          icon: Icons.emergency_rounded,
+          category: 'universal',
+          priority: 6,
+        );
 
     if (context.mounted && Navigator.canPop(context)) {
       Navigator.pop(context);
     }
 
     ref.read(emergencyCommunicationControllerProvider.notifier).executeDispatch(
-          triggerSource: 'MANUAL SOS',
+          triggerSource: 'MANUAL SOS (UNIVERSAL CALL)',
           selectedService: selectedService,
         );
   }
-
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,6 +61,22 @@ class EmergencyActivationBottomSheet extends ConsumerWidget {
 
     final seconds = countdownState.secondsRemaining;
     final selectedService = serviceState.selectedService;
+    final telemetryState = ref.watch(telemetryControllerProvider);
+    final countryResult = CountryResolver.resolve(location: telemetryState.latestPoint);
+    final countryProfile = EmergencyServiceDirectory.getProfile(countryResult.countryCode);
+    final localEmergencyNumber = countryProfile.universalNumber;
+
+
+
+
+
+
+    // Ensure countdown timer is actively running whenever the sheet is open
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (countdownState.status == SosCountdownStatus.idle) {
+        sessionController.startSos();
+      }
+    });
 
     // Listen for countdown completed or cancelled events
     ref.listen<SosCountdownStateModel>(sosCountdownStateProvider, (previous, next) {
@@ -63,6 +89,16 @@ class EmergencyActivationBottomSheet extends ConsumerWidget {
         }
       }
     });
+
+
+    /*
+    final internationalStandards = [
+      {'number': '112', 'region': 'EU / India / GSM'},
+      {'number': '911', 'region': 'US / Canada'},
+      {'number': '999', 'region': 'UK / Cmwlth'},
+      {'number': '000', 'region': 'Australia'},
+    ];
+    */
 
 
     return Container(
@@ -154,6 +190,127 @@ class EmergencyActivationBottomSheet extends ConsumerWidget {
 
           const SizedBox(height: 16),
 
+          // Direct Universal Emergency Card
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.cardDark : const Color(0xFFFFE5EA),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.sosPrimary, width: 1.5),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(
+                    color: AppColors.sosPrimary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.phone_in_talk_rounded, color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Universal Emergency (${selectedService?.emergencyNumber ?? localEmergencyNumber})',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Detected Region: ${countryProfile.countryName} • Direct Emergency Line',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          /*
+          // ── COMMENTED OUT PER USER DIRECTIVE: Zero Manual Feature Selection During SOS ──
+          // International Standards Quick Selector Pills
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            alignment: WrapAlignment.center,
+            children: internationalStandards.map((item) {
+              final number = item['number']!;
+              final region = item['region']!;
+              final isCurrentSelected = (selectedService?.emergencyNumber ?? localEmergencyNumber) == number;
+
+              return InkWell(
+                onTap: () {
+                  sessionController.selectService(
+                    EmergencyService(
+                      id: 'srv_$number',
+                      name: 'Emergency $number',
+                      description: region,
+                      emergencyNumber: number,
+                      icon: Icons.phone_in_talk_rounded,
+                      category: 'universal',
+                      priority: 6,
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isCurrentSelected
+                        ? AppColors.sosPrimary
+                        : (isDark ? Colors.white10 : const Color(0xFFF1F5F9)),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isCurrentSelected
+                          ? AppColors.sosPrimary
+                          : (isDark ? Colors.white24 : const Color(0xFFCBD5E1)),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        number,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          color: isCurrentSelected ? Colors.white : (isDark ? Colors.white : const Color(0xFF0F172A)),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '($region)',
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                          color: isCurrentSelected ? Colors.white70 : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          */
+
+          const SizedBox(height: 8),
+
+
+          /*
+          // ── COMMENTED OUT PER USER DIRECTIVE: Multi-Service Department Selector ──
           // Emergency Service Selector Title
           Align(
             alignment: Alignment.centerLeft,
@@ -201,7 +358,6 @@ class EmergencyActivationBottomSheet extends ConsumerWidget {
                         Icon(
                           isSelected ? Icons.check_circle_rounded : service.icon,
                           size: 16,
-
                           color: isSelected ? Colors.white : theme.colorScheme.primary,
                         ),
                         const SizedBox(width: 6),
@@ -237,16 +393,18 @@ class EmergencyActivationBottomSheet extends ConsumerWidget {
                 );
               }).toList(),
             ),
+          */
 
           const SizedBox(height: 14),
 
           // Auto-Selection Message
           Text(
-            'If no response is given before timer expires,\nUniversal Emergency (112) will be dispatched.',
+            'Direct Universal Emergency (${selectedService?.emergencyNumber ?? localEmergencyNumber}) Dispatch Active.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 10,
-              color: Colors.grey.shade600,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white70 : Colors.grey.shade700,
               height: 1.3,
             ),
           ),
@@ -309,6 +467,3 @@ class EmergencyActivationBottomSheet extends ConsumerWidget {
     );
   }
 }
-
-
-

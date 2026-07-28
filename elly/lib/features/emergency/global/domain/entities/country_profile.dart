@@ -82,6 +82,7 @@ class CountryProfile {
     required this.medicalNumber,
     required this.policeNumber,
     required this.fireNumber,
+    this.universalNumber = '112',
     this.disasterNumber = '112',
     this.directoryVersion = '2026.1',
     this.unitSystem = 'metric',
@@ -99,6 +100,7 @@ class CountryProfile {
   final String medicalNumber;
   final String policeNumber;
   final String fireNumber;
+  final String universalNumber;
   final String disasterNumber;
   final String directoryVersion;
   final String unitSystem;
@@ -117,6 +119,7 @@ class CountryProfile {
       'medicalNumber': medicalNumber,
       'policeNumber': policeNumber,
       'fireNumber': fireNumber,
+      'universalNumber': universalNumber,
       'disasterNumber': disasterNumber,
       'directoryVersion': directoryVersion,
       'unitSystem': unitSystem,
@@ -137,7 +140,9 @@ class CountryProfile {
       medicalNumber: json['medicalNumber'] as String,
       policeNumber: json['policeNumber'] as String,
       fireNumber: json['fireNumber'] as String,
+      universalNumber: json['universalNumber'] as String? ?? '112',
       disasterNumber: json['disasterNumber'] as String? ?? '112',
+
       directoryVersion: json['directoryVersion'] as String? ?? '2026.1',
       unitSystem: json['unitSystem'] as String? ?? 'metric',
       embassyContact: json['embassyContact'] != null

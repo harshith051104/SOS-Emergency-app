@@ -1,18 +1,16 @@
 /// protection_header_card.dart
 ///
-/// Top header card showing protection status, readiness score, live telemetry stats, and END EMERGENCY SESSION when active.
+/// Top Emergency Protection Card matching design reference:
+/// Premium Coral/Red gradient background, white SOS shield icon, ACTIVE status pill,
+/// and Test SOS action button.
 
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:elly/core/theme/app_colors.dart';
-import 'package:elly/features/emergency/telemetry/presentation/providers/telemetry_providers.dart';
-import 'package:elly/features/emergency/offline/presentation/providers/offline_providers.dart';
-import 'package:elly/features/emergency/offline/domain/entities/network_state.dart';
 
 class ProtectionHeaderCard extends ConsumerWidget {
-
   const ProtectionHeaderCard({
     super.key,
     required this.isDark,
@@ -30,28 +28,28 @@ class ProtectionHeaderCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final telemetryPoint = ref.watch(latestTelemetryPointProvider);
-
-    // Swap: Place END EMERGENCY SESSION button at top when active
     if (isActiveSos) {
       return SizedBox(
-        height: 56,
+        height: 52,
         child: ElevatedButton.icon(
           onPressed: onTestSos,
-          icon: const Icon(Icons.stop_circle_rounded, color: Colors.white, size: 26),
-          label: const Text(
-            'END EMERGENCY SESSION',
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 15,
-              letterSpacing: 1.2,
-              color: Colors.white,
+          icon: const Icon(Icons.stop_circle_rounded, color: Colors.white, size: 22),
+          label: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'END EMERGENCY SESSION (${elapsedFormatted ?? "LIVE"})',
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 12.5,
+                letterSpacing: 0.8,
+                color: Colors.white,
+              ),
             ),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.sosPrimary,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             elevation: 6,
             shadowColor: AppColors.sosPrimary.withValues(alpha: 0.5),
           ),
@@ -59,155 +57,160 @@ class ProtectionHeaderCard extends ConsumerWidget {
       );
     }
 
-    final latLngStr = telemetryPoint != null
-        ? '${telemetryPoint.latitude.toStringAsFixed(4)}, ${telemetryPoint.longitude.toStringAsFixed(4)}'
-        : 'GPS Active • Lat/Lng Attached';
-    final accuracyStr = telemetryPoint != null ? '±${telemetryPoint.accuracy.toStringAsFixed(0)}m' : '±8m';
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : AppColors.cardLight,
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFF526C), Color(0xFFFF2E4D)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: const Color(0xFFFF2E4D).withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
+          // Left: SOS Shield Icon
+          Container(
+            width: 50,
+            height: 50,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
                     Icons.shield_rounded,
-                    color: Colors.green,
-                    size: 22,
+                    color: Color(0xFFFF2E4D),
+                    size: 42,
+                  ),
+
+                  Text(
+                    'SOS',
+
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 10,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+
+          // Middle Column: Title, Active Status, Description
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Emergency Protection',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'ELLY Protection Active',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    const Text(
+                      'ACTIVE',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        letterSpacing: 0.5,
                       ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on_rounded, size: 11, color: Colors.blue),
-                          const SizedBox(width: 3),
-                          Expanded(
-                            child: Text(
-                              '$latLngStr ($accuracyStr)',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                    ),
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF22C55E),
+                        shape: BoxShape.circle,
                       ),
-                    ],
+                      child: const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 10,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                const Text(
+                  'ELLY is always ready to protect you.',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
 
-          // Network Status Badge & Test SOS Button
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Consumer(
-                builder: (context, ref, child) {
-                  final netState = ref.watch(networkStateProvider);
-                  final isOffline = netState == NetworkState.offline;
-
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: isOffline ? Colors.amber.withValues(alpha: 0.15) : Colors.green.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isOffline ? Colors.amber : Colors.green,
+          // Right: Test SOS Pill Button
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTestSos,
+              borderRadius: BorderRadius.circular(30),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.monitor_heart_outlined,
+                      color: Color(0xFFFF2E4D),
+                      size: 16,
+                    ),
+                    SizedBox(width: 5),
+                    Text(
+                      'Test SOS',
+                      style: TextStyle(
+                        color: Color(0xFFFF2E4D),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isOffline ? Icons.wifi_off_rounded : Icons.wifi_rounded,
-                          size: 11,
-                          color: isOffline ? Colors.amber.shade800 : Colors.green,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isOffline ? 'OFFLINE' : 'ONLINE',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: isOffline ? Colors.amber.shade800 : Colors.green,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 6),
-              SizedBox(
-                height: 28,
-                child: OutlinedButton(
-                  onPressed: onTestSos,
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: AppColors.sosPrimary.withValues(alpha: 0.5)),
-                    foregroundColor: AppColors.sosPrimary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text(
-                    'TEST SOS',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 9.5,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),
     );
-
   }
-
 }

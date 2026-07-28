@@ -20,6 +20,11 @@ import '../../domain/entities/communication_event.dart';
 import '../../domain/repositories/emergency_communication_repository.dart';
 import '../../data/repositories/emergency_communication_repository_impl.dart';
 import 'package:elly/features/emergency/sos_circle/presentation/providers/sos_circle_providers.dart';
+import 'package:elly/features/emergency/global/domain/services/country_resolver.dart';
+import 'package:elly/features/emergency/global/domain/entities/emergency_service_directory.dart';
+import 'package:elly/features/emergency/telemetry/presentation/providers/telemetry_providers.dart';
+
+
 
 
 
@@ -140,24 +145,30 @@ class EmergencyCommunicationController extends StateNotifier<EmergencyCommunicat
     final serviceSelection = _ref.read(emergencyServiceProvider);
     final activeService = selectedService ?? serviceSelection.selectedService;
 
-    final number = activeService?.emergencyNumber ?? '112';
+    // Resolve country emergency number based on live GPS location
+    final telemetryState = _ref.read(telemetryControllerProvider);
+    final countryResult = CountryResolver.resolve(location: telemetryState.latestPoint);
+    final countryProfile = EmergencyServiceDirectory.getProfile(countryResult.countryCode);
+    final resolvedNumber = activeService?.emergencyNumber ?? countryProfile.universalNumber;
+
+
+
     final sessionId = 'EL-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
     final request = EmergencyDispatchRequest(
       sessionId: sessionId,
       triggerSource: triggerSource,
       selectedService: activeService ??
-          const EmergencyService(
-            id: 'srv_universal',
-            name: 'Universal Helpline',
-            description: 'National Unified Emergency Response Standard',
-            emergencyNumber: '112',
+          EmergencyService(
+            id: 'srv_universal_${countryProfile.countryCode}',
+            name: 'Universal Emergency (${countryProfile.countryName})',
+            description: 'Live GPS Emergency Line for ${countryProfile.countryName}',
+            emergencyNumber: resolvedNumber,
             icon: Icons.emergency_rounded,
             category: 'universal',
             priority: 6,
           ),
-
-      selectedEmergencyNumber: number,
+      selectedEmergencyNumber: resolvedNumber,
       selectedAt: DateTime.now(),
     );
 
@@ -172,6 +183,7 @@ class EmergencyCommunicationController extends StateNotifier<EmergencyCommunicat
 
     return await _repository.startEmergencyCommunication(request);
   }
+
 
   void reset() {
     state = const EmergencyCommunicationState();

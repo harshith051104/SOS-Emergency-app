@@ -1,7 +1,8 @@
 /// live_responder_pipeline_card.dart
 ///
-/// Unified Live Responder Pipeline Card driven by real-time event streams
-/// from the Emergency Communication Engine.
+/// Section "What happens during SOS" redesigned to match the design reference image:
+/// Features a 6-step horizontal visual pipeline with circular icons, connecting dashed lines,
+/// step titles, and action descriptions while maintaining real-time event updates.
 
 library;
 
@@ -9,9 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:elly/core/theme/app_colors.dart';
 import 'package:elly/features/emergency/communication/presentation/providers/communication_providers.dart';
-
 import 'package:elly/features/emergency/communication/domain/entities/communication_event.dart';
-
 
 class LiveResponderPipelineCard extends ConsumerStatefulWidget {
   const LiveResponderPipelineCard({
@@ -61,14 +60,12 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
       if (mounted && widget.isActiveSos) setState(() => _dispatchStep = 3);
     });
     Future.delayed(const Duration(milliseconds: 1800), () {
-      if (mounted && widget.isActiveSos) setState(() => _dispatchStep = 5); // All 4 completed!
+      if (mounted && widget.isActiveSos) setState(() => _dispatchStep = 6);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     // Listen to real-time communication events
     ref.listen<AsyncValue<CommunicationEvent>>(communicationEventStreamProvider, (previous, next) {
       next.whenData((event) {
@@ -86,233 +83,235 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
           case DialerLaunchedEvent():
           case DispatchCompletedEvent():
           case EmergencySessionStartedEvent():
-            setState(() => _dispatchStep = 5);
+            setState(() => _dispatchStep = 6);
           default:
             break;
         }
       });
     });
 
-
     final steps = [
-      'Initializing Monitoring Engine',
-      'Compiling Telemetry Packet',
-      'Selecting Communication Channel',
-      'Launching Emergency Communication',
+      _SosFlowStepData(
+        stepNumber: '1. Detect',
+        title: 'Emergency Detected',
+        icon: Icons.notifications_none_rounded,
+        bgColor: const Color(0xFFFFE5EA),
+        iconColor: const Color(0xFFFF2E4D),
+      ),
+      _SosFlowStepData(
+        stepNumber: '2. Alert',
+        title: 'Notify SOS Circle',
+        icon: Icons.send_rounded,
+        bgColor: const Color(0xFFF3E8FF),
+        iconColor: const Color(0xFF9333EA),
+      ),
+      _SosFlowStepData(
+        stepNumber: '3. Dispatch',
+        title: 'Ambulance & Emergency',
+        icon: Icons.local_hospital_outlined,
+        bgColor: const Color(0xFFE0F2FE),
+        iconColor: const Color(0xFF0284C7),
+      ),
+      _SosFlowStepData(
+        stepNumber: '4. Inform',
+        title: 'Hospital & Authorities',
+        icon: Icons.domain_rounded,
+        bgColor: const Color(0xFFE0F2FE),
+        iconColor: const Color(0xFF0D9488),
+      ),
+      _SosFlowStepData(
+        stepNumber: '5. Share',
+        title: 'Live Location & Health Data',
+        icon: Icons.location_on_outlined,
+        bgColor: const Color(0xFFDCFCE7),
+        iconColor: const Color(0xFF16A34A),
+      ),
+      _SosFlowStepData(
+        stepNumber: '6. Assist',
+        title: 'Live Elly Guidance',
+        icon: Icons.headset_mic_outlined,
+        bgColor: const Color(0xFFFFE5EA),
+        iconColor: const Color(0xFFFF2E4D),
+      ),
     ];
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: widget.isDark ? AppColors.cardDark : AppColors.cardLight,
-        borderRadius: BorderRadius.circular(22),
+        color: widget.isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: widget.isActiveSos ? AppColors.sosPrimary : theme.colorScheme.outline.withValues(alpha: 0.1),
-          width: widget.isActiveSos ? 1.5 : 1.0,
+          color: widget.isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : const Color(0xFFE2E8F0),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: widget.isDark ? 0.2 : 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Section Title & Overall Status
+          // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    widget.isActiveSos ? Icons.warning_amber_rounded : Icons.shield_outlined,
-                    color: widget.isActiveSos ? AppColors.sosPrimary : Colors.green,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'LIVE RESPONDER PIPELINE',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
-                      color: widget.isDark ? Colors.white70 : Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: (widget.isActiveSos ? AppColors.sosPrimary : Colors.green).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              Expanded(
                 child: Text(
-                  widget.isActiveSos ? (_dispatchStep > 4 ? 'DISPATCHED' : 'DISPATCHING') : 'READY',
+                  'What happens during SOS',
                   style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: widget.isActiveSos ? (_dispatchStep > 4 ? AppColors.successGreen : AppColors.sosPrimary) : Colors.green,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: widget.isDark ? Colors.white : const Color(0xFF1E293B),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Sub-Section 1: System Telemetry Badges
-          Row(
-            children: [
-              _buildBadge('Telemetry', 'Active', Colors.green),
-
               const SizedBox(width: 8),
-              _buildBadge('Responders', '${widget.respondersCount} Ready', Colors.blue),
-              const SizedBox(width: 8),
-              _buildBadge('Channel', 'Internet', Colors.purple),
-            ],
-          ),
-
-          // Sub-Section 2: Event-Driven Dispatch Step Checklist (Active SOS Only)
-          if (widget.isActiveSos) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.sosPrimary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.sosPrimary.withValues(alpha: 0.2)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: List.generate(steps.length, (index) {
-                  final stepIdx = index + 1;
-                  final isDone = _dispatchStep > stepIdx;
-                  final isCurrent = _dispatchStep == stepIdx;
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: widget.onViewLocationDetails,
+                  borderRadius: BorderRadius.circular(12),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          width: 18,
-                          height: 18,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isDone
-                                ? AppColors.successGreen
-                                : isCurrent
-                                    ? AppColors.sosPrimary.withValues(alpha: 0.2)
-                                    : Colors.transparent,
-                            border: Border.all(
-                              color: isDone
-                                  ? AppColors.successGreen
-                                  : isCurrent
-                                      ? AppColors.sosPrimary
-                                      : Colors.grey.shade600,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: isDone
-                              ? const Icon(Icons.check, size: 11, color: Colors.white)
-                              : isCurrent
-                                  ? const Center(
-                                      child: SizedBox(
-                                        width: 6,
-                                        height: 6,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 1.5,
-                                          color: AppColors.sosPrimary,
-                                        ),
-                                      ),
-                                    )
-                                  : null,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            steps[index],
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: isDone || isCurrent ? FontWeight.bold : FontWeight.normal,
-                              color: isDone
-                                  ? (widget.isDark ? Colors.white : Colors.black87)
-                                  : isCurrent
-                                      ? AppColors.sosPrimary
-                                      : Colors.grey,
-                            ),
+                        Text(
+                          'Details',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF3B82F6),
                           ),
                         ),
+                        SizedBox(width: 2),
+                        Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF3B82F6)),
                       ],
                     ),
-                  );
-                }),
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 12),
-          const Divider(height: 1, thickness: 0.5),
-          const SizedBox(height: 10),
-
-          // Sub-Section 3: Live GPS Location Sharing Status
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.location_on_rounded, color: Colors.green, size: 16),
                   ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Live Location Telemetry',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Horizontal SOS Flow Steps List
+          SizedBox(
+            height: 110,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              clipBehavior: Clip.antiAlias,
+              itemCount: steps.length,
+
+
+              separatorBuilder: (context, index) => Container(
+                width: 32,
+                alignment: Alignment.topCenter,
+                padding: const EdgeInsets.only(top: 18),
+                child: Row(
+                  children: List.generate(
+                    4,
+                    (i) => Expanded(
+                      child: Container(
+                        height: 1.5,
+                        margin: const EdgeInsets.symmetric(horizontal: 1),
+                        color: widget.isDark ? Colors.white24 : const Color(0xFFCBD5E1),
                       ),
-                      const SizedBox(height: 1),
+                    ),
+                  ),
+                ),
+              ),
+              itemBuilder: (context, index) {
+                final step = steps[index];
+                final isCompleted = (index + 1) <= _dispatchStep;
+
+                return SizedBox(
+                  width: 96,
+                  child: Column(
+                    children: [
+                      // Icon Circle Container
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isCompleted
+                              ? step.bgColor
+                              : (widget.isDark ? Colors.white10 : const Color(0xFFF1F5F9)),
+                          border: Border.all(
+                            color: isCompleted
+                                ? step.iconColor.withValues(alpha: 0.4)
+                                : (widget.isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Icon(
+                          step.icon,
+                          size: 20,
+                          color: isCompleted
+                              ? step.iconColor
+                              : (widget.isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Step Number
                       Text(
-                        widget.isActiveSos ? 'Sharing GPS  •  Updated 3s ago' : 'GPS Tracking Active  •  5s updates',
-                        style: const TextStyle(fontSize: 9, color: Colors.grey),
+                        step.stepNumber,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: widget.isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+
+                      // Step Title / Description
+                      Text(
+                        step.title,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          height: 1.2,
+                          fontWeight: FontWeight.w500,
+                          color: widget.isDark ? Colors.white60 : const Color(0xFF64748B),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                ],
-              ),
-              if (widget.onViewLocationDetails != null)
-                GestureDetector(
-                  onTap: widget.onViewLocationDetails,
-                  child: const Text(
-                    'Details →',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue),
-                  ),
-                ),
-            ],
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildBadge(String key, String val, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: [
-            Text(val, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
-            Text(key, style: const TextStyle(fontSize: 8, color: Colors.grey)),
-          ],
-        ),
-      ),
-    );
-  }
+class _SosFlowStepData {
+  _SosFlowStepData({
+    required this.stepNumber,
+    required this.title,
+    required this.icon,
+    required this.bgColor,
+    required this.iconColor,
+  });
+
+  final String stepNumber;
+  final String title;
+  final IconData icon;
+  final Color bgColor;
+  final Color iconColor;
 }

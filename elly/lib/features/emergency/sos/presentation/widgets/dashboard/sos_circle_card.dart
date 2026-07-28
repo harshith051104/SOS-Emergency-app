@@ -1,6 +1,8 @@
 /// sos_circle_card.dart
 ///
-/// Priority Emergency Responders Circle card backed by Riverpod SOSCircleController.
+/// Priority Emergency Responders Circle card redesigned to match the design reference image:
+/// Displays header "SOS Circle (Who will be notified)", View All link, horizontal avatars with
+/// green online indicators, priority level labels, and an Add Contact button card.
 
 library;
 
@@ -22,123 +24,230 @@ class SosCircleCard extends ConsumerWidget {
   final bool isActiveSos;
   final VoidCallback onViewAll;
 
+  static final List<Color> _priorityColors = [
+    const Color(0xFFFF2E4D), // Priority 1 (Red)
+    const Color(0xFFF97316), // Priority 2 (Orange)
+    const Color(0xFF3B82F6), // Priority 3 (Blue)
+    const Color(0xFFA855F7), // Priority 4 (Purple)
+    const Color(0xFF22C55E), // Priority 5 (Green)
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final circleState = ref.watch(sosCircleControllerProvider);
     final List<EmergencyContact> contacts = circleState.contacts;
 
-
-
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : AppColors.cardLight,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.people_alt_rounded, size: 18, color: Colors.blue),
-                  const SizedBox(width: 8),
-                  Text(
-                    'SOS CIRCLE (${contacts.where((c) => c.isEnabled).length}/${contacts.length})',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
-                      color: isDark ? Colors.white70 : Colors.black87,
-                    ),
+              Expanded(
+                child: Text(
+                  'SOS Circle (Who will be notified)',
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? Colors.white : const Color(0xFF1E293B),
                   ),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
+              const SizedBox(width: 8),
               GestureDetector(
                 onTap: onViewAll,
-                child: const Text(
-                  'Manage →',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue),
+                child: const Row(
+                  children: [
+                    Text(
+                      'View All',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF3B82F6),
+                      ),
+                    ),
+                    SizedBox(width: 2),
+                    Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF3B82F6)),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 16),
+
+          // Avatar Horizontal List
           SizedBox(
-            height: 64,
-            child: contacts.isEmpty
-                ? const Center(
-                    child: Text('No Emergency Contacts Configured', style: TextStyle(fontSize: 11, color: Colors.grey)))
-                : ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: contacts.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      final contact = contacts[index];
-                      return _buildAvatar(contact, isActiveSos);
-                    },
-                  ),
+            height: 98,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: contacts.length + 1, // Contacts + Add Contact card
+              separatorBuilder: (_, __) => const SizedBox(width: 14),
+              itemBuilder: (context, index) {
+                if (index < contacts.length) {
+                  final contact = contacts[index];
+                  final priorityColor = _priorityColors[index % _priorityColors.length];
+                  return _buildContactAvatar(contact, index + 1, priorityColor);
+                } else {
+                  return _buildAddContactCard();
+                }
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAvatar(EmergencyContact contact, bool isActive) {
+  Widget _buildContactAvatar(EmergencyContact contact, int priorityNum, Color priorityColor) {
     final displayName = contact.fullName.split(' ').first;
-    return Column(
-      children: [
-        Stack(
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: contact.isPrimaryContact
-                  ? AppColors.sosPrimary.withValues(alpha: 0.25)
-                  : Colors.blue.withValues(alpha: 0.2),
-              child: Text(
-                contact.fullName.isNotEmpty ? contact.fullName[0].toUpperCase() : '?',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: contact.isPrimaryContact ? AppColors.sosPrimary : Colors.blue,
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: Container(
-                width: 10,
-                height: 10,
+    final initial = contact.fullName.isNotEmpty ? contact.fullName[0].toUpperCase() : '?';
+
+    return SizedBox(
+      width: 64,
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Circular Avatar Container
+              Container(
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  color: contact.isEnabled
-                      ? (isActive ? AppColors.successGreen : Colors.blue)
-                      : Colors.grey,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 1.5),
+                  color: priorityColor.withValues(alpha: 0.15),
+                  border: Border.all(
+                    color: priorityColor.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    initial,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: priorityColor,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        SizedBox(
-          width: 54,
-          child: Text(
+
+              // Green Online Dot Indicator (Top Right)
+              Positioned(
+                top: 1,
+                right: 1,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF22C55E),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // Name
+          Text(
             displayName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 10,
-              fontWeight: contact.isPrimaryContact ? FontWeight.bold : FontWeight.w600,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w800,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
+          const SizedBox(height: 2),
+
+          // Priority Label
+          Text(
+            'Priority $priorityNum',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w800,
+              color: priorityColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddContactCard() {
+    return GestureDetector(
+      onTap: onViewAll,
+      child: SizedBox(
+        width: 64,
+        child: Column(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+                border: Border.all(
+                  color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+                ),
+              ),
+              child: Icon(
+                Icons.add_rounded,
+                size: 26,
+                color: isDark ? Colors.white70 : const Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Add',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white60 : const Color(0xFF64748B),
+              ),
+            ),
+            Text(
+              'Contact',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
