@@ -177,7 +177,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             )
           else
             ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               children: [
                 // Section 1: Protection Header Card (Top Banner)
                 ProtectionHeaderCard(
@@ -189,7 +189,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ? () => _endEmergency(context)
                       : () => _triggerSosFlow(context, isTest: true),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
 
                 // State View: Normal vs Active vs Resolved
                 if (_uiState == DashboardUiState.resolved)
@@ -212,7 +212,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     isDark: isDark,
                     onViewAll: () => _openSheet(context, const TriggerMethodsDetailSheet()),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // Section 3: SOS Circle (Who will be notified)
                   SosCircleCard(
@@ -220,17 +220,16 @@ class _HomePageState extends ConsumerState<HomePage> {
                     isActiveSos: isActiveSos,
                     onViewAll: () => _openSheet(context, const SosCircleDetailSheet()),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // Section 4: What happens during SOS (6 Step Flow)
                   LiveResponderPipelineCard(
                     isDark: isDark,
                     isActiveSos: isActiveSos,
                     onViewLocationDetails: () => _openSheet(context, const SosFlowDetailSheet()),
-
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // Section 5: Live Location Sharing Card
                   LocationSharingCard(
@@ -238,7 +237,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     isActiveSos: isActiveSos,
                     onViewDetails: () {},
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // Section 6: Emergency Health Passport (Shared during SOS)
                   HealthPassportCard(
@@ -246,10 +245,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                     isActiveSos: isActiveSos,
                     onViewAll: () => _openSheet(context, const HealthPassportDetailSheet()),
                   ),
-                  SizedBox(height: isActiveSos ? 160 : 100), // Extra bottom padding for active banner
+                  SizedBox(height: isActiveSos ? 120 : 75), // Bottom padding for quick action bar
                 ],
               ],
             ),
+
 
           // ── Sticky Floating ACTIVE SOS EMERGENCY Timer Banner ──
           if (isActiveSos && !isDevMode)

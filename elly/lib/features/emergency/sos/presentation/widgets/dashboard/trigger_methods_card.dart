@@ -62,7 +62,7 @@ class TriggerMethodsCard extends ConsumerWidget {
             Text(
               'How SOS is Triggered',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w800,
                 color: isDark ? Colors.white : const Color(0xFF1E293B),
               ),
@@ -74,35 +74,35 @@ class TriggerMethodsCard extends ConsumerWidget {
                   Text(
                     'Manage',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF3B82F6),
                     ),
                   ),
                   SizedBox(width: 2),
-                  Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF3B82F6)),
+                  Icon(Icons.chevron_right_rounded, size: 15, color: Color(0xFF3B82F6)),
                 ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
 
-        // Horizontal Scrollable Cards List
-        SizedBox(
-          height: 142,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: cards.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final item = cards[index];
-              return Container(
-                width: 210,
-                padding: const EdgeInsets.all(14),
+        // Static 3-Column Trigger Cards Row (Zero Horizontal Scroll)
+        Row(
+          children: cards.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+
+            return Expanded(
+              child: Container(
+                margin: EdgeInsets.only(
+                  right: index < cards.length - 1 ? 8 : 0,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.cardDark : Colors.white,
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.08)
@@ -111,20 +111,20 @@ class TriggerMethodsCard extends ConsumerWidget {
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Top Row: Icon + Title + ON/OFF Chip
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             color: item.iconBgColor,
                             shape: BoxShape.circle,
@@ -132,29 +132,16 @@ class TriggerMethodsCard extends ConsumerWidget {
                           child: Icon(
                             item.icon,
                             color: item.iconColor,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            item.title,
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
-                              color: isDark ? Colors.white : const Color(0xFF0F172A),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            size: 15,
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                           decoration: BoxDecoration(
                             color: item.isEnabled
                                 ? const Color(0xFFDCFCE7)
                                 : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: item.isEnabled
                                   ? const Color(0xFF86EFAC)
@@ -164,7 +151,7 @@ class TriggerMethodsCard extends ConsumerWidget {
                           child: Text(
                             item.isEnabled ? 'ON' : 'OFF',
                             style: TextStyle(
-                              fontSize: 9.5,
+                              fontSize: 9,
                               fontWeight: FontWeight.w900,
                               color: item.isEnabled
                                   ? const Color(0xFF15803D)
@@ -174,44 +161,34 @@ class TriggerMethodsCard extends ConsumerWidget {
                         ),
                       ],
                     ),
-
-                    // Subtitle Text
+                    const SizedBox(height: 8),
+                    Text(
+                      item.title,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
                     Text(
                       item.subtitle,
                       style: TextStyle(
-                        fontSize: 11,
-                        height: 1.3,
-                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                        fontSize: 9.5,
                         fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                        height: 1.2,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-
-                    // Bottom Right Arrow Circle
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.chevron_right_rounded,
-                          size: 16,
-                          color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );

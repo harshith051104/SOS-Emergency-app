@@ -10,7 +10,9 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:elly/core/theme/app_colors.dart';
 import 'package:elly/features/emergency/health_passport/presentation/providers/health_passport_providers.dart';
+
 
 class HealthPassportCard extends ConsumerWidget {
   const HealthPassportCard({
@@ -88,7 +90,7 @@ class HealthPassportCard extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header Row
+        // Section Header
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -96,7 +98,7 @@ class HealthPassportCard extends ConsumerWidget {
               child: Text(
                 'Emergency Health Passport',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
                   color: isDark ? Colors.white : const Color(0xFF1E293B),
                 ),
@@ -105,7 +107,7 @@ class HealthPassportCard extends ConsumerWidget {
               ),
             ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             GestureDetector(
               onTap: onViewAll,
               child: const Row(
@@ -113,35 +115,35 @@ class HealthPassportCard extends ConsumerWidget {
                   Text(
                     'Manage',
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF3B82F6),
                     ),
                   ),
                   SizedBox(width: 2),
-                  Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF3B82F6)),
+                  Icon(Icons.chevron_right_rounded, size: 15, color: Color(0xFF3B82F6)),
                 ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
 
-        // Horizontal Mini-Cards List
-        SizedBox(
-          height: 104,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              final item = items[index];
-              return Container(
-                width: 96,
-                padding: const EdgeInsets.all(10),
+        // Static 3-Column Mini-Cards Row (Zero Horizontal Scroll)
+        Row(
+          children: items.take(3).toList().asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+
+            return Expanded(
+              child: Container(
+                margin: EdgeInsets.only(
+                  right: index < 2 ? 8 : 0,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  color: isDark ? AppColors.cardDark : Colors.white,
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.08)
@@ -150,66 +152,64 @@ class HealthPassportCard extends ConsumerWidget {
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Icon Container
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: item.bgColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        item.icon,
-                        color: item.iconColor,
-                        size: 20,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: item.bgColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            item.icon,
+                            color: item.iconColor,
+                            size: 14,
+                          ),
+                        ),
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          size: 14,
+                          color: Color(0xFF22C55E),
+                        ),
+                      ],
                     ),
-
-                    // Title
+                    const SizedBox(height: 6),
                     Text(
                       item.title,
-                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 10.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-
-                    // Bottom Green Checkmark Indicator
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (item.isComplete)
-                          Container(
-                            padding: const EdgeInsets.all(1.5),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF22C55E),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 9,
-                            ),
-                          ),
-                      ],
+                    const SizedBox(height: 1),
+                    Text(
+                      item.subtitle,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );

@@ -37,19 +37,21 @@ class SosCircleCard extends ConsumerWidget {
     final circleState = ref.watch(sosCircleControllerProvider);
     final List<EmergencyContact> contacts = circleState.contacts;
 
+    final displayContacts = contacts.take(3).toList();
+
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -64,7 +66,7 @@ class SosCircleCard extends ConsumerWidget {
                 child: Text(
                   'SOS Circle (Who will be notified)',
                   style: TextStyle(
-                    fontSize: 14.5,
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF1E293B),
                   ),
@@ -72,7 +74,7 @@ class SosCircleCard extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               GestureDetector(
                 onTap: onViewAll,
                 child: const Row(
@@ -86,37 +88,37 @@ class SosCircleCard extends ConsumerWidget {
                       ),
                     ),
                     SizedBox(width: 2),
-                    Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF3B82F6)),
+                    Icon(Icons.chevron_right_rounded, size: 15, color: Color(0xFF3B82F6)),
                   ],
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // Avatar Horizontal List
-          SizedBox(
-            height: 98,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: contacts.length + 1, // Contacts + Add Contact card
-              separatorBuilder: (_, __) => const SizedBox(width: 14),
-              itemBuilder: (context, index) {
-                if (index < contacts.length) {
-                  final contact = contacts[index];
-                  final priorityColor = _priorityColors[index % _priorityColors.length];
-                  return _buildContactAvatar(contact, index + 1, priorityColor);
-                } else {
-                  return _buildAddContactCard();
-                }
-              },
-            ),
+          // Static Contacts Row (Zero Horizontal Scroll)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              ...displayContacts.asMap().entries.map((entry) {
+                final index = entry.key;
+                final contact = entry.value;
+                final priorityColor = _priorityColors[index % _priorityColors.length];
+                return Expanded(
+                  child: _buildContactAvatar(contact, index + 1, priorityColor),
+                );
+              }),
+              Expanded(
+                child: _buildAddContactCard(),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+
 
   Widget _buildContactAvatar(EmergencyContact contact, int priorityNum, Color priorityColor) {
     final displayName = contact.fullName.split(' ').first;

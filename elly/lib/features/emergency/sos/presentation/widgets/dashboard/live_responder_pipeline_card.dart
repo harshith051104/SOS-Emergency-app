@@ -137,10 +137,10 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
 
     return Container(
       clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: widget.isDark ? AppColors.cardDark : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: widget.isDark
               ? Colors.white.withValues(alpha: 0.08)
@@ -149,8 +149,8 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: widget.isDark ? 0.2 : 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -165,7 +165,7 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
                 child: Text(
                   'What happens during SOS',
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: widget.isDark ? Colors.white : const Color(0xFF1E293B),
                   ),
@@ -173,27 +173,27 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: widget.onViewLocationDetails,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           'Details',
                           style: TextStyle(
-                            fontSize: 12.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF3B82F6),
                           ),
                         ),
                         SizedBox(width: 2),
-                        Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF3B82F6)),
+                        Icon(Icons.chevron_right_rounded, size: 15, color: Color(0xFF3B82F6)),
                       ],
                     ),
                   ),
@@ -201,100 +201,114 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
 
-          // Horizontal SOS Flow Steps List
-          SizedBox(
-            height: 110,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              clipBehavior: Clip.antiAlias,
-              itemCount: steps.length,
-
-
-              separatorBuilder: (context, index) => Container(
-                width: 32,
-                alignment: Alignment.topCenter,
-                padding: const EdgeInsets.only(top: 18),
-                child: Row(
-                  children: List.generate(
-                    4,
-                    (i) => Expanded(
-                      child: Container(
-                        height: 1.5,
-                        margin: const EdgeInsets.symmetric(horizontal: 1),
-                        color: widget.isDark ? Colors.white24 : const Color(0xFFCBD5E1),
-                      ),
-                    ),
-                  ),
-                ),
+          // Static 3-Column Pipeline Row (Zero Horizontal Scroll)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Step 1: Detect
+              _buildStaticStep(
+                step: steps[0],
+                isCompleted: 1 <= _dispatchStep,
+                isDark: widget.isDark,
               ),
-              itemBuilder: (context, index) {
-                final step = steps[index];
-                final isCompleted = (index + 1) <= _dispatchStep;
-
-                return SizedBox(
-                  width: 96,
-                  child: Column(
-                    children: [
-                      // Icon Circle Container
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isCompleted
-                              ? step.bgColor
-                              : (widget.isDark ? Colors.white10 : const Color(0xFFF1F5F9)),
-                          border: Border.all(
-                            color: isCompleted
-                                ? step.iconColor.withValues(alpha: 0.4)
-                                : (widget.isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Icon(
-                          step.icon,
-                          size: 20,
-                          color: isCompleted
-                              ? step.iconColor
-                              : (widget.isDark ? Colors.white38 : const Color(0xFF94A3B8)),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Step Number
-                      Text(
-                        step.stepNumber,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: widget.isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-
-                      // Step Title / Description
-                      Text(
-                        step.title,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          height: 1.2,
-                          fontWeight: FontWeight.w500,
-                          color: widget.isDark ? Colors.white60 : const Color(0xFF64748B),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+              _buildDashedConnector(widget.isDark),
+              // Step 2: Alert
+              _buildStaticStep(
+                step: steps[1],
+                isCompleted: 2 <= _dispatchStep,
+                isDark: widget.isDark,
+              ),
+              _buildDashedConnector(widget.isDark),
+              // Step 3: Dispatch & Assist
+              _buildStaticStep(
+                step: steps[2],
+                isCompleted: 3 <= _dispatchStep,
+                isDark: widget.isDark,
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStaticStep({
+    required _SosFlowStepData step,
+    required bool isCompleted,
+    required bool isDark,
+  }) {
+    return Expanded(
+      child: Column(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isCompleted
+                  ? step.bgColor
+                  : (isDark ? Colors.white10 : const Color(0xFFF1F5F9)),
+              border: Border.all(
+                color: isCompleted
+                    ? step.iconColor
+                    : (isDark ? Colors.white24 : const Color(0xFFCBD5E1)),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(
+              step.icon,
+              size: 18,
+              color: isCompleted
+                  ? step.iconColor
+                  : (isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            step.stepNumber,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 1),
+          Text(
+            step.title,
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w500,
+              color: isDark ? Colors.white60 : const Color(0xFF64748B),
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashedConnector(bool isDark) {
+    return Container(
+      width: 18,
+      padding: const EdgeInsets.only(top: 18),
+      child: Row(
+        children: List.generate(
+          3,
+          (i) => Expanded(
+            child: Container(
+              height: 1.5,
+              margin: const EdgeInsets.symmetric(horizontal: 1),
+              color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+            ),
+          ),
+        ),
       ),
     );
   }

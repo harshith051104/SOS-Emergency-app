@@ -61,14 +61,15 @@ class _LocationSharingCardState extends State<LocationSharingCard> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
 
         // Main Card
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: widget.isDark ? AppColors.cardDark : Colors.white,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
+
             border: Border.all(
               color: widget.isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
             ),

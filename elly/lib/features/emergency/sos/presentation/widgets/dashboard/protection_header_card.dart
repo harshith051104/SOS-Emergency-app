@@ -59,14 +59,15 @@ class ProtectionHeaderCard extends ConsumerWidget {
 
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFFFF526C), Color(0xFFFF2E4D)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
+
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFFF2E4D).withValues(alpha: 0.35),
