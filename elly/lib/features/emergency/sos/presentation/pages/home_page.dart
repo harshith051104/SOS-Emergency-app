@@ -34,7 +34,9 @@ import 'package:elly/features/emergency/sos/presentation/widgets/details/trigger
 import 'package:elly/features/emergency/sos/presentation/widgets/details/sos_circle_detail_sheet.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/details/health_passport_detail_sheet.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/details/sos_flow_detail_sheet.dart';
+import 'package:elly/features/emergency/sos/presentation/widgets/details/message_sos_circle_sheet.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/emergency_activation_bottom_sheet.dart';
+
 
 
 import 'package:elly/features/emergency/communication/presentation/controllers/emergency_communication_controller.dart';
@@ -334,8 +336,9 @@ class _HomePageState extends ConsumerState<HomePage> {
           : FloatingQuickActionsBar(
               isDark: isDark,
               onCallEmergency: () => _triggerSosFlow(context),
-              onMessageCircle: () => _openSheet(context, const SosCircleDetailSheet()),
+              onMessageCircle: () => _openSheet(context, const MessageSosCircleSheet()),
             ),
+
 
     );
   }

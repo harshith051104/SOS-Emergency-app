@@ -23,99 +23,37 @@ class TriggerMethodsDetailSheet extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      maxChildSize: 0.95,
-      minChildSize: 0.6,
-      builder: (context, scrollController) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.15)),
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Drag Handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
           ),
-          child: ListView(
-            controller: scrollController,
-            children: [
-              // Top Drag Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView(
+              children: [
+                const SizedBox(height: 14),
 
-              // Sheet Header Title
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'HOW SOS SHOULD TRIGGER',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0,
-                          color: AppColors.sosPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Configure emergency activation methods',
-                        style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // ── 1. Manual SOS (Mandatory & Locked) ────────────────────────
-              _buildTriggerCard(
-                context: context,
-                isDark: isDark,
-                icon: Icons.touch_app_rounded,
-                iconColor: AppColors.sosPrimary,
-                name: '1. Manual SOS',
-                description: 'Instant 1-tap Hero button and floating thumb dock.',
-                badgeText: 'MANDATORY',
-                badgeColor: AppColors.sosPrimary,
-                isEnabled: config.isManualEnabled,
-                isLocked: true,
-                onChanged: null,
-                reasonIfLocked: 'Primary mandatory emergency action. Cannot be disabled.',
-              ),
-              const SizedBox(height: 14),
-
-              // ── 2. Voice Trigger ──────────────────────────────────────────
-              _buildTriggerCard(
-                context: context,
-                isDark: isDark,
-                icon: Icons.mic_rounded,
-                iconColor: Colors.blueAccent,
-                name: '2. Voice Trigger',
-                description: 'Hands-free voice interaction during active emergency.',
-                isEnabled: config.isVoiceTriggerEnabled,
-                onChanged: (val) => notifier.toggleVoiceTrigger(val),
-                permissionWidget: _buildPermissionChip(
-                  context,
-                  ref,
-                  'Microphone',
-                  config.microphonePermission,
-                ),
-              ),
-              const SizedBox(height: 14),
 
               // ── 3. Wake Word ──────────────────────────────────────────────
               _buildTriggerCard(
@@ -187,10 +125,14 @@ class TriggerMethodsDetailSheet extends ConsumerWidget {
               const SizedBox(height: 20),
             ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
+
+
 
   Widget _buildTriggerCard({
     required BuildContext context,

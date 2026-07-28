@@ -118,91 +118,95 @@ class _SosCircleDetailSheetState extends ConsumerState<SosCircleDetailSheet> {
     final List<EmergencyContact> contacts = circleState.contacts;
 
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.8,
-      maxChildSize: 0.95,
-      minChildSize: 0.5,
-      builder: (context, scrollController) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: const BoxDecoration(
-            color: Color(0xFF1E293B),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E293B),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(color: Colors.grey.shade600, borderRadius: BorderRadius.circular(2)),
+            ),
           ),
-          child: ListView(
-            controller: scrollController,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(color: Colors.grey.shade600, borderRadius: BorderRadius.circular(2)),
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SOS EMERGENCY CIRCLE',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.blue, letterSpacing: 0.8),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Trusted Emergency Contacts & Escalation List',
+                          style: TextStyle(fontSize: 11, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      onPressed: () => _showAddContactDialog(context),
+                      icon: const Icon(Icons.person_add_alt_1_rounded, color: Colors.blue),
+                      tooltip: 'Add Contact',
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'SOS EMERGENCY CIRCLE',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.blue, letterSpacing: 0.8),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Trusted Emergency Contacts & Escalation List',
-                        style: TextStyle(fontSize: 11, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    onPressed: () => _showAddContactDialog(context),
-                    icon: const Icon(Icons.person_add_alt_1_rounded, color: Colors.blue),
-                    tooltip: 'Add Contact',
+                if (circleState.validationError != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            circleState.validationError!,
+                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
-              ),
-              if (circleState.validationError != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          circleState.validationError!,
-                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                const SizedBox(height: 16),
+                if (contacts.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Text('No emergency contacts added yet.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    ),
+                  )
+                else
+                  ...contacts.map((contact) => _buildContactTile(context, ref, contact)),
               ],
-              const SizedBox(height: 16),
-              if (contacts.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(
-                    child: Text('No emergency contacts added yet.', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  ),
-                )
-              else
-                ...contacts.map((contact) => _buildContactTile(context, ref, contact)),
-            ],
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
+
 
   Widget _buildContactTile(BuildContext context, WidgetRef ref, EmergencyContact contact) {
     final notifier = ref.read(sosCircleControllerProvider.notifier);
@@ -295,3 +299,5 @@ class _SosCircleDetailSheetState extends ConsumerState<SosCircleDetailSheet> {
     );
   }
 }
+
+

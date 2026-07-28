@@ -119,30 +119,33 @@ class _HealthPassportDetailSheetState extends ConsumerState<HealthPassportDetail
     final profile = passport?.profile;
     final validation = passportState.validationResult;
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      maxChildSize: 0.95,
-      minChildSize: 0.5,
-      builder: (context, scrollController) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: const BoxDecoration(
-            color: Color(0xFF1E293B),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E293B),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(color: Colors.grey.shade600, borderRadius: BorderRadius.circular(2)),
+            ),
           ),
-          child: ListView(
-            controller: scrollController,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(color: Colors.grey.shade600, borderRadius: BorderRadius.circular(2)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +192,6 @@ class _HealthPassportDetailSheetState extends ConsumerState<HealthPassportDetail
                   ),
                 ),
               ],
-              const SizedBox(height: 16),
               if (profile != null) ...[
                 _field('Full Name', profile.fullName),
                 _field('Blood Group', profile.bloodGroup.isNotEmpty ? profile.bloodGroup : 'Unspecified'),
@@ -204,10 +206,12 @@ class _HealthPassportDetailSheetState extends ConsumerState<HealthPassportDetail
               ],
             ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _field(String title, String value) {
     return Container(
