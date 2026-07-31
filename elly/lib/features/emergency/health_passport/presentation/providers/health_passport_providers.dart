@@ -19,8 +19,13 @@ import 'package:elly/features/emergency/health_passport/presentation/controllers
 import 'package:elly/features/emergency/telemetry/presentation/providers/telemetry_providers.dart';
 import 'package:elly/features/emergency/sos_circle/presentation/providers/sos_circle_providers.dart';
 
+import 'package:elly/features/emergency/responders/presentation/providers/responder_providers.dart';
+
 final healthPassportEncryptionProvider = Provider<HealthPassportEncryption>((ref) {
-  return PassthroughHealthEncryption();
+  // Use the shared SharedPreferences instance for AES key storage.
+  // The key is generated once and persisted; subsequent launches reuse it.
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return AesHealthEncryption(prefs);
 });
 
 final healthPassportStorageProvider = Provider<HealthPassportStorageService>((ref) {

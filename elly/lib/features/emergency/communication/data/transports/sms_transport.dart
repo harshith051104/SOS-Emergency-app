@@ -46,7 +46,30 @@ class SmsTransport implements BaseTransport {
     );
   }
 
-  String formatCompactSms(String rawPayload) {
-    return '[ELLY SOS EMERGENCY ALERT] Need urgent assistance! Target: Active Session';
+  /// Formats compact offline SMS data packet containing live location, health passport, and checksum.
+  String formatCompactSms({
+    required String sessionId,
+    String? emergencyNumber,
+    String? locationText,
+    String? bloodType,
+    String? allergies,
+    String? checksum,
+  }) {
+    final buffer = StringBuffer();
+    buffer.writeln('🚨 [ELLY SOS EMERGENCY ALERT]');
+    buffer.writeln('Session: $sessionId');
+    if (emergencyNumber != null && emergencyNumber.isNotEmpty) {
+      buffer.writeln('Line: $emergencyNumber');
+    }
+    buffer.writeln('Location: ${locationText ?? "Live GPS Attached"}');
+    if (bloodType != null || allergies != null) {
+      buffer.writeln('Medical: Blood ${bloodType ?? "N/A"}, Allergies: ${allergies ?? "None"}');
+    }
+    if (checksum != null) {
+      buffer.writeln('Checksum: $checksum');
+    }
+    buffer.write('Status: ACTIVE EMERGENCY - S.O.S.');
+    return buffer.toString();
   }
 }
+

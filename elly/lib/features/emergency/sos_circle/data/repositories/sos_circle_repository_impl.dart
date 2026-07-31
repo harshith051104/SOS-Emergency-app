@@ -117,33 +117,34 @@ class SOSCircleRepositoryImpl implements SOSCircleRepository {
 
   List<EmergencyContact> _generateDefaultContacts() {
     final now = DateTime.now();
+    // NOTE: These are example placeholder contacts only.
+    // Real contacts must be added by the user in the SOS Circle screen.
+    // Phone numbers use the ITU +1-555-01xx reserved fictional range.
     return [
       EmergencyContact(
-        id: 'cnt_mom_01',
-        fullName: 'Mom (Primary Contact)',
+        id: 'cnt_placeholder_01',
+        fullName: 'Primary Contact (Set Up Required)',
         relationship: 'Family',
-        primaryPhone: '+1 800-555-0199',
-        secondaryPhone: '+1 800-555-0198',
-        email: 'mom.family@example.com',
+        primaryPhone: '+15550100001',
         isPrimaryContact: true,
         createdAt: now,
         updatedAt: now,
       ),
       EmergencyContact(
-        id: 'cnt_doc_02',
-        fullName: 'Dr. Sarah Smith',
-        relationship: 'Primary Care Doctor',
-        primaryPhone: '+1 800-555-0188',
-        email: 'dr.smith@medcare.org',
+        id: 'cnt_placeholder_02',
+        fullName: 'Medical Contact (Set Up Required)',
+        relationship: 'Doctor / Healthcare',
+        primaryPhone: '+15550100002',
+        email: 'example@example.com',
         priority: 2,
         createdAt: now,
         updatedAt: now,
       ),
       EmergencyContact(
-        id: 'cnt_alex_03',
-        fullName: 'Alex Johnson',
-        relationship: 'Spouse / Guardian',
-        primaryPhone: '+1 800-555-0177',
+        id: 'cnt_placeholder_03',
+        fullName: 'Secondary Contact (Set Up Required)',
+        relationship: 'Trusted Person',
+        primaryPhone: '+15550100003',
         priority: 3,
         createdAt: now,
         updatedAt: now,

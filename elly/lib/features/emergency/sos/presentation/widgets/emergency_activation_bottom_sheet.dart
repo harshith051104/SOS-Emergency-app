@@ -71,12 +71,10 @@ class EmergencyActivationBottomSheet extends ConsumerWidget {
 
 
 
-    // Ensure countdown timer is actively running whenever the sheet is open
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (countdownState.status == SosCountdownStatus.idle) {
-        sessionController.startSos();
-      }
-    });
+    // NOTE: The countdown is started by the code that opens this bottom sheet
+    // (via emergencySessionController.startSos()). Do NOT restart it here —
+    // addPostFrameCallback fires on every rebuild and would restart the countdown
+    // after orientation changes, soft keyboard events, etc.
 
     // Listen for countdown completed or cancelled events
     ref.listen<SosCountdownStateModel>(sosCountdownStateProvider, (previous, next) {

@@ -14,6 +14,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/router/app_router.dart';
 import '../../domain/enums/emergency_status.dart';
 import '../providers/emergency_providers.dart';
+import 'package:elly/features/emergency/sos/data/services/alert_sound_vibration_service.dart';
 
 /// Representation of an emergency category option.
 class _EmergencyCategoryItem {
@@ -81,6 +82,20 @@ class EmergencyConfirmationPage extends ConsumerStatefulWidget {
 class _EmergencyConfirmationPageState
     extends ConsumerState<EmergencyConfirmationPage> {
   bool _showingSuccess = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AlertSoundVibrationService.startAlertSequence(
+      spokenText: 'Emergency confirmation page triggered! Auto activating in 10 seconds.',
+    );
+  }
+
+  @override
+  void dispose() {
+    AlertSoundVibrationService.stopAlertSequence();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

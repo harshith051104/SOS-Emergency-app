@@ -27,6 +27,8 @@ import 'package:elly/features/emergency/offline/presentation/providers/offline_p
 import 'package:elly/features/emergency/global/domain/services/country_resolver.dart';
 import 'package:elly/features/emergency/global/domain/entities/emergency_service_directory.dart';
 import 'package:elly/features/emergency/telemetry/presentation/providers/telemetry_providers.dart';
+import 'package:elly/features/emergency/monitoring/presentation/providers/monitoring_provider.dart';
+
 
 enum EmergencySessionStep {
   idle,
@@ -375,22 +377,46 @@ class EmergencySessionController extends StateNotifier<EmergencySessionState> {
   void startEmergencySession() {
     state = state.copyWith(step: EmergencySessionStep.emergencyActive);
     final context = _ref.read(emergencyContextProvider);
-    _ref.read(activeEmergencySessionControllerProvider.notifier).createAndStartSession(context);
+    final repo = _ref.read(emergencySessionRepositoryProvider);
+    repo.createSession(context).then((session) => repo.startSession(session.sessionId));
+
+    // Auto-activate Flight Recorder Engine, Continuous Packet Generator & Transports in real-time
+    try {
+      _ref.read(startMonitoringUseCaseProvider).execute(
+        sessionId: 'SOS_${AppClock.now().millisecondsSinceEpoch}',
+        triggerType: 'MANUAL_SOS_ALERT',
+      );
+    } catch (e) {
+      appLogger.warning('EmergencySessionController: Monitoring engine auto-start: $e');
+    }
   }
+
 
   void cancelEmergency() {
     _ref.read(sosCountdownStateProvider.notifier).cancelCountdown();
     _ref.read(emergencyServiceProvider.notifier).clearSelection();
-    _ref.read(activeEmergencySessionControllerProvider.notifier).endSession();
+    _ref.read(emergencySessionRepositoryProvider).endSession();
+    _stopMonitoringEngine();
     state = state.copyWith(step: EmergencySessionStep.cancelled);
   }
 
   void resetToIdle() {
     _ref.read(sosCountdownStateProvider.notifier).resetToIdle();
     _ref.read(emergencyServiceProvider.notifier).clearSelection();
-    _ref.read(activeEmergencySessionControllerProvider.notifier).endSession();
+    _ref.read(emergencySessionRepositoryProvider).endSession();
+    _stopMonitoringEngine();
     state = const EmergencySessionState();
   }
+
+  void _stopMonitoringEngine() {
+    try {
+      _ref.read(stopMonitoringUseCaseProvider).execute();
+    } catch (e) {
+      appLogger.warning('EmergencySessionController: Monitoring engine auto-stop: $e');
+    }
+  }
+
+
 
   void _recordTimeline({
     required String title,

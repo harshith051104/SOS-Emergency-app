@@ -10,6 +10,8 @@ import '../../domain/entities/sos_trigger_config.dart';
 import '../../domain/repositories/sos_trigger_config_repository.dart';
 import '../../data/repositories/sos_trigger_config_repository_impl.dart';
 
+import 'package:elly/features/emergency/voice_trigger/presentation/providers/vad_providers.dart';
+
 final sosTriggerConfigRepositoryProvider = Provider<SosTriggerConfigRepository>((ref) {
   return SosTriggerConfigRepositoryImpl();
 });
@@ -17,24 +19,36 @@ final sosTriggerConfigRepositoryProvider = Provider<SosTriggerConfigRepository>(
 final sosTriggerConfigProvider =
     StateNotifierProvider<SosTriggerConfigNotifier, SosTriggerConfig>((ref) {
   final repo = ref.watch(sosTriggerConfigRepositoryProvider);
-  return SosTriggerConfigNotifier(repo);
+  return SosTriggerConfigNotifier(repo, ref);
 });
 
 class SosTriggerConfigNotifier extends StateNotifier<SosTriggerConfig> {
-  SosTriggerConfigNotifier(this._repository) : super(const SosTriggerConfig()) {
+  SosTriggerConfigNotifier(this._repository, this._ref) : super(const SosTriggerConfig()) {
     _loadInitialConfig();
   }
 
   final SosTriggerConfigRepository _repository;
+  final Ref _ref;
 
   Future<void> _loadInitialConfig() async {
     final loaded = await _repository.loadConfig();
     state = loaded;
   }
 
+  Future<void> toggleManualTrigger(bool enabled) async {
+    state = state.copyWith(isManualEnabled: enabled);
+    await _repository.saveConfig(state);
+  }
+
   Future<void> toggleVoiceTrigger(bool enabled) async {
     state = state.copyWith(isVoiceTriggerEnabled: enabled);
     await _repository.saveConfig(state);
+
+    if (enabled) {
+      await _ref.read(vadControllerProvider.notifier).startVadService();
+    } else {
+      await _ref.read(vadControllerProvider.notifier).stopVadService();
+    }
   }
 
   Future<void> toggleWakeWord(bool enabled) async {
@@ -47,7 +61,13 @@ class SosTriggerConfigNotifier extends StateNotifier<SosTriggerConfig> {
     await _repository.saveConfig(state);
   }
 
+  Future<void> toggleLowBatterySos(bool enabled) async {
+    state = state.copyWith(isLowBatterySosEnabled: enabled);
+    await _repository.saveConfig(state);
+  }
+
   Future<void> refreshPermissions() async {
+
     final perm = await _repository.checkMicrophonePermission();
     state = state.copyWith(microphonePermission: perm);
   }

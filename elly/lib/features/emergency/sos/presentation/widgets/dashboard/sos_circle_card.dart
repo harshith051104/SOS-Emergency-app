@@ -37,87 +37,95 @@ class SosCircleCard extends ConsumerWidget {
     final circleState = ref.watch(sosCircleControllerProvider);
     final List<EmergencyContact> contacts = circleState.contacts;
 
-    final displayContacts = contacts.take(3).toList();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // On phone (< 550px): show up to 5 contacts + Add Contact. On tablet (>= 550px): show all contacts.
+        final isWideScreen = constraints.maxWidth >= 550;
+        final maxVisible = isWideScreen ? contacts.length : 5;
+        final displayContacts = contacts.take(maxVisible).toList();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'SOS Circle (Who will be notified)',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardDark : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
               ),
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: onViewAll,
-                child: const Row(
-                  children: [
-                    Text(
-                      'View All',
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'SOS Circle (Who will be notified)',
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF3B82F6),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(width: 2),
-                    Icon(Icons.chevron_right_rounded, size: 15, color: Color(0xFF3B82F6)),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    onTap: onViewAll,
+                    child: const Row(
+                      children: [
+                        Text(
+                          'View All',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF3B82F6),
+                          ),
+                        ),
+                        SizedBox(width: 2),
+                        Icon(Icons.chevron_right_rounded, size: 15, color: Color(0xFF3B82F6)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // Dynamic Contacts Row (Displays 5 on phone, all on tablet)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  ...displayContacts.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final contact = entry.value;
+                    final priorityColor = _priorityColors[index % _priorityColors.length];
+                    return Expanded(
+                      child: _buildContactAvatar(contact, index + 1, priorityColor),
+                    );
+                  }),
+                  Expanded(
+                    child: _buildAddContactCard(),
+                  ),
+                ],
               ),
             ],
           ),
-
-          const SizedBox(height: 12),
-
-          // Static Contacts Row (Zero Horizontal Scroll)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              ...displayContacts.asMap().entries.map((entry) {
-                final index = entry.key;
-                final contact = entry.value;
-                final priorityColor = _priorityColors[index % _priorityColors.length];
-                return Expanded(
-                  child: _buildContactAvatar(contact, index + 1, priorityColor),
-                );
-              }),
-              Expanded(
-                child: _buildAddContactCard(),
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
+
 
 
   Widget _buildContactAvatar(EmergencyContact contact, int priorityNum, Color priorityColor) {
@@ -188,22 +196,11 @@ class SosCircleCard extends ConsumerWidget {
               color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
           ),
-          const SizedBox(height: 2),
-
-          // Priority Label
-          Text(
-            'Priority $priorityNum',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w800,
-              color: priorityColor,
-            ),
-          ),
         ],
       ),
     );
   }
+
 
   Widget _buildAddContactCard() {
     return GestureDetector(

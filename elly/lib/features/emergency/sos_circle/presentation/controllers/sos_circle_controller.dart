@@ -12,6 +12,7 @@ import 'package:elly/features/emergency/sos_circle/domain/entities/emergency_con
 import 'package:elly/features/emergency/sos_circle/domain/entities/sos_notification_request.dart';
 import 'package:elly/features/emergency/sos_circle/domain/entities/sos_notification_result.dart';
 import 'package:elly/features/emergency/sos_circle/domain/repositories/sos_circle_repository.dart';
+import 'package:elly/features/emergency/packet/presentation/providers/packet_providers.dart';
 
 
 
@@ -83,6 +84,10 @@ class SOSCircleController extends StateNotifier<SOSCircleState> {
     int priority = 1,
   }) async {
     final now = DateTime.now();
+
+    // Auto-assign primary if this is the very first contact in the circle
+    final effectiveIsPrimary = isPrimaryContact || state.contacts.isEmpty;
+
     final newContact = EmergencyContact(
       id: 'cnt_${now.millisecondsSinceEpoch}',
       fullName: fullName,
@@ -91,20 +96,22 @@ class SOSCircleController extends StateNotifier<SOSCircleState> {
       secondaryPhone: secondaryPhone,
       email: email,
       priority: priority,
-      isPrimaryContact: isPrimaryContact,
+      isPrimaryContact: effectiveIsPrimary,
       createdAt: now,
       updatedAt: now,
     );
 
-
-    // If making this contact primary, clear primary status from all existing contacts
-    var updatedList = List<EmergencyContact>.from(state.contacts);
-    if (isPrimaryContact) {
-      updatedList = updatedList.map((c) => c.copyWith(isPrimaryContact: false)).toList();
+    // Build the prospective full list for validation (existing contacts with
+    // isPrimary cleared if the new one will be primary, then append new contact)
+    var prospectiveList = List<EmergencyContact>.from(state.contacts);
+    if (effectiveIsPrimary) {
+      prospectiveList = prospectiveList
+          .map((c) => c.copyWith(isPrimaryContact: false))
+          .toList();
     }
-    updatedList.add(newContact);
+    prospectiveList.add(newContact);
 
-    final validation = _repository.validateContacts(updatedList);
+    final validation = _repository.validateContacts(prospectiveList);
     if (!validation.isValid) {
       state = state.copyWith(validationError: validation.errorMessage);
       return false;
@@ -112,14 +119,16 @@ class SOSCircleController extends StateNotifier<SOSCircleState> {
 
     try {
       state = state.copyWith(isLoading: true, clearValidationError: true);
-      // Persist changes
-      if (isPrimaryContact) {
+
+      // Demote ALL existing primaries in the repository first
+      if (effectiveIsPrimary) {
         for (final c in state.contacts) {
           if (c.isPrimaryContact) {
             await _repository.updateContact(c.copyWith(isPrimaryContact: false));
           }
         }
       }
+
       await _repository.saveContact(newContact);
       await loadContacts();
       return true;
@@ -209,6 +218,36 @@ class SOSCircleController extends StateNotifier<SOSCircleState> {
     return updateContact(updated);
   }
 
+  /// Reorders contacts list dynamically via Drag and Drop and updates priorities.
+  Future<void> reorderContacts(int oldIndex, int newIndex) async {
+    final list = List<EmergencyContact>.from(state.contacts);
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final item = list.removeAt(oldIndex);
+    list.insert(newIndex, item);
+
+    // Re-assign priorities 1..N based on new order
+    final reorderedList = <EmergencyContact>[];
+    for (int i = 0; i < list.length; i++) {
+      reorderedList.add(list[i].copyWith(
+        priority: i + 1,
+        isPrimaryContact: i == 0, // First priority becomes primary
+      ));
+    }
+
+    state = state.copyWith(contacts: reorderedList);
+    try {
+      for (final c in reorderedList) {
+        await _repository.updateContact(c);
+      }
+    } catch (e) {
+      appLogger.error('SOSCircleController: Failed saving reordered contacts', e);
+    }
+  }
+
+
+
   /// Executes SOS emergency notifications for enabled contacts.
   Future<SOSNotificationResult?> triggerSOSNotifications({
     required String sessionId,
@@ -224,6 +263,9 @@ class SOSCircleController extends StateNotifier<SOSCircleState> {
       return null;
     }
 
+    // Read the live real-time emergency data packet from the backend engines
+    final livePacket = _ref.read(emergencyDataPacketProvider);
+
     final request = SOSNotificationRequest(
       dispatchId: 'dsp_${DateTime.now().millisecondsSinceEpoch}',
       sessionId: sessionId,
@@ -231,8 +273,9 @@ class SOSCircleController extends StateNotifier<SOSCircleState> {
       selectedService: selectedService,
       triggeredAt: DateTime.now(),
       contacts: state.contacts,
-      currentLocation: currentLocation ?? 'GPS Active • Lat/Lng Attached',
-      healthPassportReference: healthPassportReference ?? 'hp_ref_01',
+      currentLocation: currentLocation,
+      healthPassportReference: healthPassportReference,
+      emergencyPacket: livePacket,
     );
 
     state = state.copyWith(isNotifying: true, clearValidationError: true);

@@ -5,6 +5,7 @@
 
 library;
 
+import 'dart:io' show Platform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:elly/features/emergency/sos_circle/domain/entities/sos_circle.dart';
 
@@ -12,15 +13,19 @@ import 'package:elly/features/emergency/sos_circle/domain/entities/sos_circle_ev
 import 'package:elly/features/emergency/sos_circle/domain/repositories/sos_circle_repository.dart';
 import 'package:elly/features/emergency/sos_circle/data/repositories/sos_circle_repository_impl.dart';
 import 'package:elly/features/emergency/sos_circle/data/services/sos_notification_service.dart';
+import 'package:elly/features/emergency/sos_circle/data/channels/device_sim_sms_channel.dart';
 import 'package:elly/features/emergency/sos_circle/presentation/controllers/sos_circle_controller.dart';
 
 
 import 'package:elly/features/emergency/sos_circle/domain/entities/notification_channel.dart';
 
 final notificationChannelsProvider = Provider<List<NotificationChannel>>((ref) {
-  return [
-    SimulatedNotificationChannel(),
-  ];
+  // On Android: use the real Device SIM SMS channel.
+  // On other platforms (iOS, Web, Desktop): fall back to the simulated channel.
+  if (Platform.isAndroid) {
+    return [DeviceSimSmsChannel()];
+  }
+  return [SimulatedNotificationChannel()];
 });
 
 final sosNotificationServiceProvider = Provider<SOSNotificationService>((ref) {

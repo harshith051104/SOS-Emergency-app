@@ -6,6 +6,7 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'emergency_contact.dart';
+import 'package:elly/features/emergency/packet/domain/entities/emergency_data_packet.dart';
 
 @immutable
 class SOSNotificationRequest {
@@ -18,6 +19,7 @@ class SOSNotificationRequest {
     required this.contacts,
     this.currentLocation,
     this.healthPassportReference,
+    this.emergencyPacket,
   });
 
   final String dispatchId;
@@ -28,4 +30,8 @@ class SOSNotificationRequest {
   final List<EmergencyContact> contacts;
   final String? currentLocation;
   final String? healthPassportReference;
+
+  /// Full real-time emergency data packet built by the backend engines.
+  /// When provided, the SMS channel uses this for rich, accurate data.
+  final EmergencyDataPacket? emergencyPacket;
 }

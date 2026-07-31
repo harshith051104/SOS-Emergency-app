@@ -115,13 +115,14 @@ class _LocationSharingCardState extends State<LocationSharingCard> {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      widget.isActiveSos ? 'Sharing live • Updating every 3s' : 'Updates every 5 seconds',
+                      widget.isActiveSos ? 'Sharing live • Updating every 30s' : 'Updates every 30 seconds',
                       style: TextStyle(
                         fontSize: 11,
                         color: widget.isDark ? Colors.white60 : const Color(0xFF64748B),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+
                   ],
                 ),
               ),

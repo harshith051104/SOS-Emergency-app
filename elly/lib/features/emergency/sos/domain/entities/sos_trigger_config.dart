@@ -13,6 +13,7 @@ class SosTriggerConfig {
     this.isVoiceTriggerEnabled = true,
     this.isWakeWordEnabled = false,
     this.isAutoDetectionEnabled = false,
+    this.isLowBatterySosEnabled = true,
     this.microphonePermission = TriggerPermissionStatus.unknown,
     this.isConfirmationEnabled = true,
     this.confirmationDurationSeconds = 7,
@@ -25,6 +26,7 @@ class SosTriggerConfig {
   final bool isVoiceTriggerEnabled;
   final bool isWakeWordEnabled;
   final bool isAutoDetectionEnabled;
+  final bool isLowBatterySosEnabled;
   final TriggerPermissionStatus microphonePermission;
   final bool isConfirmationEnabled;
   final int confirmationDurationSeconds;
@@ -37,6 +39,7 @@ class SosTriggerConfig {
     bool? isVoiceTriggerEnabled,
     bool? isWakeWordEnabled,
     bool? isAutoDetectionEnabled,
+    bool? isLowBatterySosEnabled,
     TriggerPermissionStatus? microphonePermission,
     bool? isConfirmationEnabled,
     int? confirmationDurationSeconds,
@@ -45,9 +48,11 @@ class SosTriggerConfig {
     bool? skipConfirmationForHighRisk,
   }) {
     return SosTriggerConfig(
+      isManualEnabled: isManualEnabled ?? this.isManualEnabled,
       isVoiceTriggerEnabled: isVoiceTriggerEnabled ?? this.isVoiceTriggerEnabled,
       isWakeWordEnabled: isWakeWordEnabled ?? this.isWakeWordEnabled,
       isAutoDetectionEnabled: isAutoDetectionEnabled ?? this.isAutoDetectionEnabled,
+      isLowBatterySosEnabled: isLowBatterySosEnabled ?? this.isLowBatterySosEnabled,
       microphonePermission: microphonePermission ?? this.microphonePermission,
       isConfirmationEnabled: isConfirmationEnabled ?? this.isConfirmationEnabled,
       confirmationDurationSeconds: confirmationDurationSeconds ?? this.confirmationDurationSeconds,
@@ -57,3 +62,4 @@ class SosTriggerConfig {
     );
   }
 }
+

@@ -203,30 +203,18 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
           ),
           const SizedBox(height: 12),
 
-          // Static 3-Column Pipeline Row (Zero Horizontal Scroll)
+          // Static 6-Column Pipeline Row (All 6 Steps Displayed At Once matching reference image)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Step 1: Detect
-              _buildStaticStep(
-                step: steps[0],
-                isCompleted: 1 <= _dispatchStep,
-                isDark: widget.isDark,
-              ),
-              _buildDashedConnector(widget.isDark),
-              // Step 2: Alert
-              _buildStaticStep(
-                step: steps[1],
-                isCompleted: 2 <= _dispatchStep,
-                isDark: widget.isDark,
-              ),
-              _buildDashedConnector(widget.isDark),
-              // Step 3: Dispatch & Assist
-              _buildStaticStep(
-                step: steps[2],
-                isCompleted: 3 <= _dispatchStep,
-                isDark: widget.isDark,
-              ),
+              for (int i = 0; i < steps.length; i++) ...[
+                _buildStaticStep(
+                  step: steps[i],
+                  isCompleted: (i + 1) <= _dispatchStep,
+                  isDark: widget.isDark,
+                ),
+                if (i < steps.length - 1) _buildDashedConnector(widget.isDark),
+              ],
             ],
           ),
         ],
@@ -243,8 +231,8 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
       child: Column(
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isCompleted
@@ -254,22 +242,22 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
                 color: isCompleted
                     ? step.iconColor
                     : (isDark ? Colors.white24 : const Color(0xFFCBD5E1)),
-                width: 1.5,
+                width: 1.2,
               ),
             ),
             child: Icon(
               step.icon,
-              size: 18,
+              size: 15,
               color: isCompleted
                   ? step.iconColor
                   : (isDark ? Colors.white38 : const Color(0xFF94A3B8)),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
           Text(
             step.stepNumber,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 9.5,
               fontWeight: FontWeight.w800,
               color: isDark ? Colors.white : const Color(0xFF0F172A),
             ),
@@ -279,9 +267,9 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
           ),
           const SizedBox(height: 1),
           Text(
-            step.title,
+            step.title.split(' ').first, // Main concise title keyword
             style: TextStyle(
-              fontSize: 9.5,
+              fontSize: 8.5,
               fontWeight: FontWeight.w500,
               color: isDark ? Colors.white60 : const Color(0xFF64748B),
             ),
@@ -296,15 +284,15 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
 
   Widget _buildDashedConnector(bool isDark) {
     return Container(
-      width: 18,
-      padding: const EdgeInsets.only(top: 18),
+      width: 10,
+      padding: const EdgeInsets.only(top: 15),
       child: Row(
         children: List.generate(
-          3,
+          2,
           (i) => Expanded(
             child: Container(
-              height: 1.5,
-              margin: const EdgeInsets.symmetric(horizontal: 1),
+              height: 1.2,
+              margin: const EdgeInsets.symmetric(horizontal: 0.8),
               color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
             ),
           ),
@@ -312,6 +300,7 @@ class _LiveResponderPipelineCardState extends ConsumerState<LiveResponderPipelin
       ),
     );
   }
+
 }
 
 class _SosFlowStepData {

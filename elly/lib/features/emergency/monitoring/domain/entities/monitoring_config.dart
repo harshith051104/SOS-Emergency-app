@@ -8,16 +8,17 @@ import 'package:equatable/equatable.dart';
 
 class MonitoringConfig extends Equatable {
   const MonitoringConfig({
-    this.normalInterval = const Duration(seconds: 10),
-    this.criticalInterval = const Duration(seconds: 5),
-    this.batterySaverInterval = const Duration(seconds: 20),
-    this.stationaryInterval = const Duration(seconds: 20),
-    this.fastMotionInterval = const Duration(seconds: 4),
+    this.normalInterval = const Duration(seconds: 30),
+    this.criticalInterval = const Duration(seconds: 30),
+    this.batterySaverInterval = const Duration(seconds: 45),
+    this.stationaryInterval = const Duration(seconds: 45),
+    this.fastMotionInterval = const Duration(seconds: 30),
     this.enableHealthCollector = false,
     this.enableMotionCollector = true,
     this.collectorTimeoutBudget = const Duration(milliseconds: 2000),
     this.retentionDays = 30,
   });
+
 
   /// Default collection frequency for standard emergencies.
   final Duration normalInterval;

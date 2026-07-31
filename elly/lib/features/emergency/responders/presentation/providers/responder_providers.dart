@@ -24,11 +24,22 @@ import '../controllers/response_engine_controller.dart';
 
 import '../../../packet/presentation/providers/packet_providers.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 // ── Infrastructure ────────────────────────────────────────────────────────────
+
+/// Provides the SharedPreferences instance (initialized once at startup).
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError(
+    'sharedPreferencesProvider must be overridden in ProviderScope. '
+    'Call SharedPreferences.getInstance() in main() and pass via overrides.',
+  );
+});
 
 final responderLocalDataSourceProvider =
     Provider<ResponderLocalDataSource>((ref) {
-  return ResponderLocalDataSourceImpl();
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return ResponderLocalDataSourceImpl(prefs: prefs);
 });
 
 final responderRepositoryProvider = Provider<ResponderRepository>((ref) {

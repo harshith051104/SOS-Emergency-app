@@ -35,14 +35,10 @@ class SOSCircleValidator {
       return ValidationResult.failure('At least one emergency contact must be enabled.');
     }
 
-    // Rule: Exactly 1 primary contact required if circle is non-empty
-    final primaryCount = contacts.where((c) => c.isPrimaryContact).length;
-    if (primaryCount == 0) {
-      return ValidationResult.failure('SOS Circle requires one designated Primary Contact.');
-    }
-    if (primaryCount > 1) {
-      return ValidationResult.failure('Only one contact can be designated as Primary Contact.');
-    }
+    // Note: Primary contact designation is optional — if no primary is set,
+    // ELLY treats the first enabled contact as the primary for dispatch.
+    // We do NOT enforce a single-primary constraint here because the controller
+    // auto-demotes the old primary when a new one is designated.
 
     // Rule: Phone numbers must be unique
     final phoneSet = <String>{};

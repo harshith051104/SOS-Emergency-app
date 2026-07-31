@@ -26,3 +26,10 @@ build/
 *.sw?
 .DS_Store
 Thumbs.db
+
+# Excluded Repos, Heavy Folders & Caches
+sherpa-onnx/
+silero-vad/
+.pytest_cache/
+*.log
+backend/logs/

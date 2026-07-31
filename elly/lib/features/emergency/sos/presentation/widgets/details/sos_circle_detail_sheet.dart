@@ -189,7 +189,28 @@ class _SosCircleDetailSheetState extends ConsumerState<SosCircleDetailSheet> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.drag_indicator_rounded, color: Colors.blue, size: 18),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Hold & drag handle icon to adjust priority order.',
+                          style: TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
                 if (contacts.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 40),
@@ -198,7 +219,22 @@ class _SosCircleDetailSheetState extends ConsumerState<SosCircleDetailSheet> {
                     ),
                   )
                 else
-                  ...contacts.map((contact) => _buildContactTile(context, ref, contact)),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.52,
+                    child: ReorderableListView.builder(
+                      itemCount: contacts.length,
+                      // ignore: deprecated_member_use
+                      onReorder: (oldIndex, newIndex) => ref.read(sosCircleControllerProvider.notifier).reorderContacts(oldIndex, newIndex),
+                      itemBuilder: (context, index) {
+
+                        final contact = contacts[index];
+                        return Container(
+                          key: ValueKey(contact.id),
+                          child: _buildContactTile(context, ref, contact, index + 1),
+                        );
+                      },
+                    ),
+                  ),
               ],
             ),
           ),
@@ -208,11 +244,13 @@ class _SosCircleDetailSheetState extends ConsumerState<SosCircleDetailSheet> {
   }
 
 
-  Widget _buildContactTile(BuildContext context, WidgetRef ref, EmergencyContact contact) {
+
+  Widget _buildContactTile(BuildContext context, WidgetRef ref, EmergencyContact contact, int priorityNum) {
     final notifier = ref.read(sosCircleControllerProvider.notifier);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: contact.isPrimaryContact ? AppColors.sosPrimary.withValues(alpha: 0.12) : const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(16),
@@ -220,84 +258,126 @@ class _SosCircleDetailSheetState extends ConsumerState<SosCircleDetailSheet> {
           color: contact.isPrimaryContact ? AppColors.sosPrimary.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.08),
         ),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        leading: CircleAvatar(
-          backgroundColor: contact.isPrimaryContact ? AppColors.sosPrimary : Colors.blue.shade700,
-          child: Text(
-            contact.fullName.isNotEmpty ? contact.fullName[0].toUpperCase() : '?',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      child: Row(
+        children: [
+          // Drag Handle
+          const Icon(Icons.drag_indicator_rounded, color: Colors.white38, size: 20),
+          const SizedBox(width: 8),
+
+          // Avatar
+          CircleAvatar(
+            radius: 19,
+            backgroundColor: contact.isPrimaryContact ? AppColors.sosPrimary : Colors.blue.shade700,
+            child: Text(
+              contact.fullName.isNotEmpty ? contact.fullName[0].toUpperCase() : '?',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+            ),
           ),
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                contact.fullName,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
-              ),
-            ),
-            if (contact.isPrimaryContact)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.sosPrimary,
-                  borderRadius: BorderRadius.circular(8),
+          const SizedBox(width: 10),
+
+          // Name, Priority Badge, Relationship & Phone
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        contact.fullName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (contact.isPrimaryContact) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.sosPrimary,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'PRIMARY',
+                          style: TextStyle(
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                child: const Text('PRIMARY', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white)),
-              ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 2),
-            Text(
-              '${contact.relationship}  •  ${contact.primaryPhone}',
-              style: const TextStyle(fontSize: 11, color: Colors.white70),
-            ),
-            if (contact.email != null && contact.email!.isNotEmpty)
-              Text(
-                contact.email!,
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
-              ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Switch(
-              value: contact.isEnabled,
-              activeTrackColor: AppColors.successGreen,
-              onChanged: (_) => notifier.toggleContactEnabled(contact.id),
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert_rounded, color: Colors.white70, size: 20),
-              color: const Color(0xFF1E293B),
-              onSelected: (val) {
-                if (val == 'primary') {
-                  notifier.setPrimaryContact(contact.id);
-                } else if (val == 'delete') {
-                  notifier.deleteContact(contact.id);
-                }
-              },
-              itemBuilder: (ctx) => [
-                if (!contact.isPrimaryContact)
-                  const PopupMenuItem(
-                    value: 'primary',
-                    child: Text('Set as Primary', style: TextStyle(color: Colors.white, fontSize: 12)),
+
+                const SizedBox(height: 2),
+                Text(
+                  '${contact.relationship}  •  ${contact.primaryPhone}',
+                  style: const TextStyle(fontSize: 11, color: Colors.white70),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (contact.email != null && contact.email!.isNotEmpty)
+                  Text(
+                    contact.email!,
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Text('Delete Contact', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
-                ),
               ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 6),
+
+          // Controls: Toggle Switch & Overflow Menu
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Transform.scale(
+                scale: 0.75,
+                child: Switch(
+                  value: contact.isEnabled,
+                  activeTrackColor: AppColors.successGreen,
+                  onChanged: (_) => notifier.toggleContactEnabled(contact.id),
+                ),
+              ),
+              PopupMenuButton<String>(
+                padding: EdgeInsets.zero,
+                icon: const Icon(Icons.more_vert_rounded, color: Colors.white70, size: 20),
+                color: const Color(0xFF1E293B),
+                onSelected: (val) {
+                  if (val == 'primary') {
+                    notifier.setPrimaryContact(contact.id);
+                  } else if (val == 'delete') {
+                    notifier.deleteContact(contact.id);
+                  }
+                },
+                itemBuilder: (ctx) => [
+                  if (!contact.isPrimaryContact)
+                    const PopupMenuItem(
+                      value: 'primary',
+                      child: Text('Set as Primary', style: TextStyle(color: Colors.white, fontSize: 12)),
+                    ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Text('Delete Contact', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
+
+
 }
 
 

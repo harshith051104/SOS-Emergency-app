@@ -129,83 +129,75 @@ class HealthPassportCard extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
 
-        // Static 3-Column Mini-Cards Row (Zero Horizontal Scroll)
+        // Static 6-Column Mini-Cards Row (All 6 displayed at once matching reference image)
         Row(
-          children: items.take(3).toList().asMap().entries.map((entry) {
+          children: items.asMap().entries.map((entry) {
             final index = entry.key;
             final item = entry.value;
 
             return Expanded(
-              child: Container(
-                margin: EdgeInsets.only(
-                  right: index < 2 ? 8 : 0,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.cardDark : Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : const Color(0xFFE2E8F0),
+              child: GestureDetector(
+                onTap: onViewAll,
+                child: Container(
+                  margin: EdgeInsets.only(
+                    right: index < items.length - 1 ? 6 : 0,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.cardDark : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : const Color(0xFFE2E8F0),
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: item.bgColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            item.icon,
-                            color: item.iconColor,
-                            size: 14,
-                          ),
-                        ),
-                        const Icon(
-                          Icons.check_circle_rounded,
-                          size: 14,
-                          color: Color(0xFF22C55E),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item.title,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      item.subtitle,
-                      style: TextStyle(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Icon Container
+                      Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: item.bgColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          item.icon,
+                          color: item.iconColor,
+                          size: 15,
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                      const SizedBox(height: 5),
+                      // Title Label
+                      Text(
+                        item.title,
+                        style: TextStyle(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      // Green Checkmark Indicator
+                      const Icon(
+                        Icons.check_rounded,
+                        size: 11,
+                        color: Color(0xFF22C55E),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -214,6 +206,8 @@ class HealthPassportCard extends ConsumerWidget {
       ],
     );
   }
+
+
 }
 
 class _PassportItemData {

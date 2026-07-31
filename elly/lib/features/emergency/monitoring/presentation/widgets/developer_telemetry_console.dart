@@ -26,8 +26,23 @@ import 'package:elly/features/emergency/global/presentation/widgets/cross_border
 import 'package:elly/features/emergency/offline_resilience/presentation/widgets/offline_resilience_status_card.dart';
 import 'package:elly/features/emergency/readiness/presentation/widgets/readiness_status_card.dart';
 import 'package:elly/features/emergency/communication/presentation/widgets/communication_status_card.dart';
+import 'package:elly/features/emergency/voice_trigger/presentation/widgets/vad_developer_console.dart';
+import 'package:elly/features/emergency/speech_recognition/presentation/widgets/speech_developer_console.dart';
+import 'package:elly/features/emergency/intent_detection/presentation/widgets/intent_developer_console.dart';
+import 'package:elly/features/emergency/speaker_verification/presentation/widgets/speaker_verification_console.dart';
+import 'package:elly/features/emergency/vocal_biomarkers/presentation/widgets/vocal_biomarker_console.dart';
+import 'package:elly/features/emergency/decision_engine/presentation/widgets/decision_console.dart';
+import 'package:elly/features/emergency/confirmation/presentation/widgets/confirmation_console.dart';
+import 'package:elly/features/emergency/session/presentation/widgets/emergency_session_console.dart';
 
-
+import 'package:elly/features/emergency/voice_trigger/presentation/providers/vad_providers.dart';
+import 'package:elly/features/emergency/speech_recognition/presentation/providers/speech_providers.dart';
+import 'package:elly/features/emergency/intent_detection/presentation/providers/intent_providers.dart';
+import 'package:elly/features/emergency/speaker_verification/presentation/providers/speaker_verification_providers.dart';
+import 'package:elly/features/emergency/vocal_biomarkers/presentation/providers/vocal_biomarker_providers.dart';
+import 'package:elly/features/emergency/decision_engine/presentation/providers/decision_providers.dart';
+import 'package:elly/features/emergency/confirmation/presentation/providers/confirmation_providers.dart';
+import 'package:elly/features/emergency/session/presentation/providers/session_providers.dart';
 
 class DeveloperTelemetryConsole extends ConsumerStatefulWidget {
   const DeveloperTelemetryConsole({
@@ -50,7 +65,16 @@ class _DeveloperTelemetryConsoleState extends ConsumerState<DeveloperTelemetryCo
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final engineState = ref.read(monitoringRepositoryProvider).currentState;
+        if (!engineState.isRunning) {
+          _startDevSession(ref);
+        }
+      }
+    });
   }
+
 
   @override
   void dispose() {
@@ -62,6 +86,16 @@ class _DeveloperTelemetryConsoleState extends ConsumerState<DeveloperTelemetryCo
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    // Eagerly instantiate all Voice & Signal pipeline controllers so EventBus listeners are live
+    ref.watch(vadControllerProvider);
+    ref.watch(speechControllerProvider);
+    ref.watch(intentControllerProvider);
+    ref.watch(speakerVerificationControllerProvider);
+    ref.watch(vocalBiomarkerControllerProvider);
+    ref.watch(decisionControllerProvider);
+    ref.watch(confirmationControllerProvider);
+    ref.watch(activeEmergencySessionControllerProvider);
 
     final engineStateAsync = ref.watch(monitoringEngineStateProvider);
     final engineState = engineStateAsync.value ?? ref.read(monitoringRepositoryProvider).currentState;
@@ -125,6 +159,22 @@ class _DeveloperTelemetryConsoleState extends ConsumerState<DeveloperTelemetryCo
                 ReadinessStatusCard(isDark: isDark),
                 const SizedBox(height: 12),
                 CommunicationStatusCard(isDark: isDark),
+                const SizedBox(height: 12),
+                const VadDeveloperConsole(),
+                const SizedBox(height: 12),
+                const SpeechDeveloperConsole(),
+                const SizedBox(height: 12),
+                const IntentDeveloperConsole(),
+                const SizedBox(height: 12),
+                const SpeakerVerificationConsole(),
+                const SizedBox(height: 12),
+                const VocalBiomarkerConsole(),
+                const SizedBox(height: 12),
+                const DecisionConsole(),
+                const SizedBox(height: 12),
+                const ConfirmationConsole(),
+                const SizedBox(height: 12),
+                const EmergencySessionConsole(),
                 const SizedBox(height: 16),
 
 
@@ -199,10 +249,8 @@ class _DeveloperTelemetryConsoleState extends ConsumerState<DeveloperTelemetryCo
     await startUseCase.execute(
       sessionId: devSessionId,
       triggerType: 'dev_console_manual',
-      config: const MonitoringConfig(
-        normalInterval: Duration(seconds: 4),
-        criticalInterval: Duration(seconds: 3),
-      ),
+      config: const MonitoringConfig(),
+
     );
 
     if (mounted) {
@@ -267,20 +315,26 @@ class _ConsoleHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Row(
-            children: [
-              Icon(Icons.terminal_rounded, color: Colors.amber, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'FLIGHT RECORDER ENGINE',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                  letterSpacing: 1.0,
-                  color: Colors.amber,
+          const Expanded(
+            child: Row(
+              children: [
+                Icon(Icons.terminal_rounded, color: Colors.amber, size: 20),
+                SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    'FLIGHT RECORDER ENGINE',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                      letterSpacing: 1.0,
+                      color: Colors.amber,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

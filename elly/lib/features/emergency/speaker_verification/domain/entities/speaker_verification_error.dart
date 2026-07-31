@@ -1,0 +1,35 @@
+/// speaker_verification_error.dart
+///
+/// Typed error classification enum and exception class for Speaker Verification.
+
+library;
+
+import 'package:flutter/foundation.dart';
+
+enum SpeakerVerificationErrorCategory {
+  none,
+  initializationFailure,
+  noEnrollment,
+  insufficientAudio,
+  timeout,
+  verificationFailure,
+}
+
+@immutable
+class SpeakerVerificationError {
+  const SpeakerVerificationError({
+    required this.category,
+    required this.message,
+    required this.timestamp,
+  });
+
+  final SpeakerVerificationErrorCategory category;
+  final String message;
+  final DateTime timestamp;
+
+  Map<String, dynamic> toJson() => {
+        'category': category.name,
+        'message': message,
+        'timestamp': timestamp.toIso8601String(),
+      };
+}

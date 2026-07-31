@@ -1,6 +1,13 @@
 /// internet_transport.dart
 ///
 /// HTTPS/REST payload transmission adaptor.
+///
+/// CURRENT STATUS: Structural stub — the REST backend endpoint is not yet
+/// provisioned. This transport records the attempt and returns a pending state
+/// rather than faking a success. Once the backend endpoint is deployed, replace
+/// the body of [send] with a real http.post() call.
+///
+/// Do NOT add simulated Future.delayed() here. Either it sends or it doesn't.
 
 library;
 
@@ -22,8 +29,14 @@ class InternetTransport implements BaseTransport {
 
   @override
   Future<DeliveryStatus> send(CommunicationRequest request) async {
-    final start = DateTime.now();
-    await Future.delayed(const Duration(milliseconds: 120));
+    // TODO(backend): Replace with real http.post() once REST endpoint is live.
+    // Example:
+    //   final response = await http.post(
+    //     Uri.parse('https://api.elly.app/v1/emergency/dispatch'),
+    //     headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+    //     body: jsonEncode(request.toJson()),
+    //   );
+    //   if (response.statusCode == 200) return DeliveryStatus(...acknowledged...);
 
     if (forceFailure) {
       return DeliveryStatus(
@@ -31,18 +44,19 @@ class InternetTransport implements BaseTransport {
         transportUsed: transportType,
         state: DeliveryState.failed,
         attempts: 1,
-        roundTripTimeMs: DateTime.now().difference(start).inMilliseconds,
-        errorReason: 'HTTP REST endpoint 503 Service Unavailable',
+        roundTripTimeMs: 0,
+        errorReason: 'Backend endpoint not yet provisioned.',
       );
     }
 
+    // Return queued — backend is not deployed yet. Do not fake success.
     return DeliveryStatus(
       requestId: request.requestId,
       transportUsed: transportType,
-      state: DeliveryState.acknowledged,
+      state: DeliveryState.queued,
       attempts: 1,
-      roundTripTimeMs: DateTime.now().difference(start).inMilliseconds,
-      deliveredAt: DateTime.now(),
+      roundTripTimeMs: 0,
+      errorReason: 'REST backend endpoint pending provisioning.',
     );
   }
 }

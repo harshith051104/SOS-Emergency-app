@@ -94,6 +94,39 @@ class Responder extends Equatable {
     );
   }
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'type': type.name,
+        'notificationMethods': notificationMethods.map((m) => m.name).toList(),
+        'phoneNumber': phoneNumber,
+        'email': email,
+        'priority': priority,
+        'isEnabled': isEnabled,
+        'acknowledgementTimeoutSeconds': acknowledgementTimeoutSeconds,
+      };
+
+  factory Responder.fromJson(Map<String, dynamic> json) => Responder(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        type: ResponderType.values.firstWhere(
+          (t) => t.name == json['type'],
+          orElse: () => ResponderType.family,
+        ),
+        notificationMethods: (json['notificationMethods'] as List<dynamic>)
+            .map((m) => NotificationMethod.values.firstWhere(
+                  (nm) => nm.name == m,
+                  orElse: () => NotificationMethod.sms,
+                ))
+            .toList(),
+        phoneNumber: json['phoneNumber'] as String?,
+        email: json['email'] as String?,
+        priority: (json['priority'] as num?)?.toInt() ?? 0,
+        isEnabled: json['isEnabled'] as bool? ?? true,
+        acknowledgementTimeoutSeconds:
+            (json['acknowledgementTimeoutSeconds'] as num?)?.toInt() ?? 30,
+      );
+
   @override
   List<Object?> get props => [
         id,
