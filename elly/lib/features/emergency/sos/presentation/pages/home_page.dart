@@ -17,14 +17,15 @@ import 'package:elly/features/emergency/sos/presentation/controllers/emergency_s
 import 'package:elly/features/emergency/monitoring/presentation/providers/developer_mode_provider.dart';
 import 'package:elly/features/emergency/monitoring/presentation/widgets/mode_toggle_switch.dart';
 import 'package:elly/features/emergency/monitoring/presentation/widgets/developer_telemetry_console.dart';
+import 'package:elly/features/emergency/voice_trigger/presentation/pages/voice_test_page.dart';
 import 'package:elly/features/emergency/responders/presentation/providers/responder_providers.dart';
 
 // Dashboard Cards
 import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/protection_header_card.dart';
+import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/voice_registration_card.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/trigger_methods_card.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/sos_circle_card.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/live_responder_pipeline_card.dart';
-import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/location_sharing_card.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/health_passport_card.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/floating_quick_actions.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/dashboard/session_summary_card.dart';
@@ -35,13 +36,23 @@ import 'package:elly/features/emergency/sos/presentation/widgets/details/sos_cir
 import 'package:elly/features/emergency/sos/presentation/widgets/details/health_passport_detail_sheet.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/details/sos_flow_detail_sheet.dart';
 import 'package:elly/features/emergency/sos/presentation/widgets/details/message_sos_circle_sheet.dart';
-import 'package:elly/features/emergency/sos/presentation/widgets/emergency_activation_bottom_sheet.dart';
 
 
 
 import 'package:elly/features/emergency/communication/presentation/controllers/emergency_communication_controller.dart';
 import 'package:elly/features/emergency/telemetry/presentation/providers/telemetry_providers.dart';
 import 'package:elly/features/emergency/readiness/presentation/providers/readiness_providers.dart';
+
+import 'package:elly/features/emergency/voice_trigger/presentation/providers/vad_providers.dart';
+import 'package:elly/features/emergency/speech_recognition/presentation/providers/speech_providers.dart';
+import 'package:elly/features/emergency/intent_detection/presentation/providers/intent_providers.dart';
+import 'package:elly/features/emergency/speaker_verification/presentation/providers/speaker_verification_providers.dart';
+import 'package:elly/features/emergency/vocal_biomarkers/presentation/providers/vocal_biomarker_providers.dart';
+import 'package:elly/features/emergency/decision_engine/presentation/providers/decision_providers.dart';
+import 'package:elly/features/emergency/confirmation/presentation/providers/confirmation_providers.dart';
+
+import 'package:elly/features/emergency/sos/presentation/providers/sos_trigger_config_provider.dart';
+import 'package:elly/features/emergency/sos/presentation/widgets/details/emergency_alert_10s_sheet.dart';
 
 enum DashboardUiState {
   normalProtection,
@@ -59,11 +70,84 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   DashboardUiState _uiState = DashboardUiState.normalProtection;
+  bool _isAlertSheetShowing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _autoStartVoiceTriggerIfEnabled();
+    });
+  }
+
+  void _autoStartVoiceTriggerIfEnabled() {
+    final config = ref.read(sosTriggerConfigProvider);
+    if (config.isVoiceTriggerEnabled) {
+      ref.read(vadControllerProvider.notifier).startVadService();
+    } else {
+      ref.read(vadControllerProvider.notifier).stopVadService();
+    }
+  }
+
+  void _trigger10sAlertConfirmation(BuildContext context, {String reason = 'Voice Triggered SOS Alert'}) {
+    if (_isAlertSheetShowing) return;
+    setState(() => _isAlertSheetShowing = true);
+
+    EmergencyAlert10sSheet.show(
+      context,
+      triggerReason: reason,
+      onConfirmed: () {
+        if (mounted) {
+          setState(() {
+            _uiState = DashboardUiState.activeSos;
+          });
+          ref.read(emergencyControllerProvider.notifier).startGeneratingPacket();
+        }
+      },
+      onCancelled: () {
+        if (mounted) {
+          setState(() {
+            _isAlertSheetShowing = false;
+            _uiState = DashboardUiState.normalProtection;
+          });
+          ref.read(emergencyControllerProvider.notifier).resetToIdle();
+        }
+      },
+    ).then((_) {
+      if (mounted) {
+        setState(() => _isAlertSheetShowing = false);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    // Eagerly instantiate voice protection and processing pipeline controllers
+    ref.watch(vadControllerProvider);
+    ref.watch(speechControllerProvider);
+    ref.watch(intentControllerProvider);
+    ref.watch(speakerVerificationControllerProvider);
+    ref.watch(vocalBiomarkerControllerProvider);
+    ref.watch(decisionControllerProvider);
+    ref.watch(confirmationControllerProvider);
+
+    // Listen for Decision Engine / Intent triggers to automatically show 10s Alert Confirmation
+    ref.listen(decisionControllerProvider, (prev, next) {
+      final config = ref.read(sosTriggerConfigProvider);
+      if (!config.isVoiceTriggerEnabled) return;
+
+      if (next.lastResult != null &&
+          next.lastResult!.recommendation.name.toLowerCase() != 'normal' &&
+          !_isAlertSheetShowing) {
+        _trigger10sAlertConfirmation(
+          context,
+          reason: 'Emergency Intent Detected (${next.lastResult!.recommendation.name.toUpperCase()})',
+        );
+      }
+    });
 
     // Listen for Emergency Communication Engine errors
     ref.listen<EmergencyCommunicationState>(emergencyCommunicationControllerProvider, (previous, next) {
@@ -161,11 +245,14 @@ class _HomePageState extends ConsumerState<HomePage> {
         actions: [
           const ModeToggleSwitch(compact: true),
           IconButton(
-            icon: Icon(
-              Icons.more_vert_rounded,
-              color: isDark ? Colors.white70 : const Color(0xFF64748B),
-            ),
-            onPressed: () {},
+            icon: const Icon(Icons.mic_external_on_rounded, color: Colors.cyanAccent),
+            tooltip: 'Open Voice Tester',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const VoiceTestPage()),
+              );
+            },
           ),
           const SizedBox(width: 4),
         ],
@@ -209,6 +296,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                     },
                   )
                 else ...[
+                  // Voice Registration Card (Owner Voice Profile)
+                  VoiceRegistrationCard(isDark: isDark),
+                  const SizedBox(height: 10),
+
                   // Section 2: How SOS is Triggered
                   TriggerMethodsCard(
                     isDark: isDark,
@@ -231,14 +322,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                     onViewLocationDetails: () => _openSheet(context, const SosFlowDetailSheet()),
                   ),
 
-                  const SizedBox(height: 10),
-
-                  // Section 5: Live Location Sharing Card
-                  LocationSharingCard(
-                    isDark: isDark,
-                    isActiveSos: isActiveSos,
-                    onViewDetails: () {},
-                  ),
                   const SizedBox(height: 10),
 
                   // Section 6: Emergency Health Passport (Shared during SOS)
@@ -340,19 +423,32 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
 
 
+
+
     );
   }
 
   void _triggerSosFlow(BuildContext context, {bool isTest = false}) {
     ref.read(emergencySessionControllerProvider.notifier).startSos();
-    _openSheet(context, const EmergencyActivationBottomSheet());
+    setState(() {
+      _uiState = DashboardUiState.activeSos;
+    });
+    ref.read(emergencyControllerProvider.notifier).startGeneratingPacket();
+
+    _trigger10sAlertConfirmation(
+      context,
+      reason: isTest ? 'Test SOS Triggered' : 'Manual SOS Button Pressed',
+    );
   }
 
   Future<void> _endEmergency(BuildContext context) async {
-    ref.read(emergencyControllerProvider.notifier).resetToIdle();
-    setState(() {
-      _uiState = DashboardUiState.normalProtection;
-    });
+    await ref.read(emergencyControllerProvider.notifier).endEmergency();
+    if (mounted) {
+      setState(() {
+        _uiState = DashboardUiState.normalProtection;
+      });
+      ref.read(emergencyControllerProvider.notifier).resetToIdle();
+    }
   }
 
   void _openSheet(BuildContext context, Widget sheet) {
